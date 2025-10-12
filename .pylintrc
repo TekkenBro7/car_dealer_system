@@ -1,0 +1,46 @@
+[MASTER]
+ignore = 
+    migrations/,
+    __pycache__,
+    .git,
+    .pytest_cache,
+    .mypy_cache,
+    node_modules,
+    build,
+    lib,
+    .idea,
+    .vscode,
+    .ruff_cache
+
+persistent=yes
+load-plugins=pylint_django
+django-settings-module=core.settings
+py-version=3.12
+suggestion-mode=yes
+
+[MESSAGES CONTROL]
+disable=
+    C0114,  # missing-module-docstring
+    C0115,  # missing-class-docstring
+    C0116,  # missing-function-docstring
+    E0401,  # import-error 
+    C0103,  # invalid-name
+    R0912,  # too many branches
+    C0415,  # import outside toplevel
+
+[FORMAT]
+max-line-length=100
+indent-string='    '
+
+[REPORTS]
+score=yes
+
+[TYPECHECK]
+ignored-modules=django,django.core,django.db
+ignored-classes=optparse.Values,thread._local,_thread._local,argparse.Namespace
+
+[SIMILARITIES]
+ignore-comments=yes
+ignore-docstrings=yes
+ignore-imports=yes
+min-similarity-lines=4

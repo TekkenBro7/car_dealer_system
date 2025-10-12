@@ -1,0 +1,43 @@
+repos:
+  - repo: local
+    hooks:
+      - id: black
+        name: black
+        entry: pipenv run black
+        language: system
+        types: [python]
+        exclude: |
+          migrations/|__pycache__|\.git|\.pytest_cache|\.mypy_cache|node_modules|build|lib|\.idea|\.vscode|\.ruff_cache
+
+      - id: isort
+        name: isort
+        entry: pipenv run isort
+        language: system
+        types: [python]
+        exclude: |
+          migrations/|__pycache__|\.git|\.pytest_cache|\.mypy_cache|node_modules|build|lib|\.idea|\.vscode|\.ruff_cache
+
+      - id: flake8
+        name: flake8
+        entry: pipenv run flake8
+        language: system
+        types: [python]
+        exclude: |
+          migrations/|__pycache__|\.git|\.pytest_cache|\.mypy_cache|node_modules|build|lib|\.idea|\.vscode|\.ruff_cache
+
+      - id: mypy
+        name: mypy
+        entry: pipenv run mypy --config-file=mypy.ini
+        language: system
+        types: [python]
+        exclude: |
+          migrations/|__pycache__|\.git|\.pytest_cache|\.mypy_cache|node_modules|build|lib|\.idea|\.vscode|\.ruff_cache
+
+      - id: pylint
+        name: pylint
+        entry: pipenv run pylint
+        language: system
+        types: [python]
+        args: [--django-settings-module=core.settings]
+        exclude: |
+          migrations/|__pycache__|\.git|\.pytest_cache|\.mypy_cache|node_modules|build|lib|\.idea|\.vscode|\.ruff_cache
