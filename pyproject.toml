@@ -17,3 +17,20 @@ exclude = '''
   | \.ruff_cache
 )/
 '''
+
+[tool.isort]
+profile = "black"
+line_length = 100
+skip = [
+    "migrations/",
+    "__pycache__",
+    ".git",
+    ".pytest_cache",
+    ".mypy_cache",
+    "node_modules",
+    "build",
+    "lib",
+    ".idea",
+    ".vscode",
+    ".ruff_cache"
+]
