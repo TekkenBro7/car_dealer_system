@@ -1,0 +1,19 @@
+[tool.black]
+line-length = 88
+target-version = ['py312']
+include = '\.pyi?$'
+exclude = '''
+/(
+    migrations/       
+  | __pycache__
+  | \.git
+  | \.pytest_cache
+  | \.mypy_cache
+  | node_modules
+  | build
+  | lib
+  | \.idea
+  | \.vscode
+  | \.ruff_cache
+)/
+'''
