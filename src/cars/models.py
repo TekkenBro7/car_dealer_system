@@ -36,7 +36,7 @@ class Car(TimeStampedModel):
     class Meta:
         verbose_name = "Car Model"
         verbose_name_plural = "Car Models"
-        unique_together = ("brand", "name")
+        unique_together = ("brand", "model_name")
 
     def __str__(self) -> str:
         return f"{self.brand.name} {self.model_name}"

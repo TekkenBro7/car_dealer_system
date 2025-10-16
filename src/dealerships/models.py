@@ -8,6 +8,7 @@ from django_countries.fields import CountryField
 
 from cars.models import Car
 from core.abstract_models import TimeStampedModel
+from dealerships.validators import validate_positive_value
 from suppliers.models import SupplierOffer
 
 User = get_user_model()
@@ -17,7 +18,13 @@ class Dealership(TimeStampedModel):
     name = models.CharField(max_length=255)
     country = CountryField()
     city = models.CharField(max_length=255, blank=True)
-    balance = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    balance = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0.00,
+        validators=[validate_positive_value],
+        help_text="Balance must be greater than 0",
+    )
 
     class Meta:
         verbose_name = "Dealership"
@@ -27,6 +34,22 @@ class Dealership(TimeStampedModel):
         return self.name
 
     def get_best_suppliers(self) -> dict[str, dict[str, Any]]:
+        """
+        Find best priced suppliers for each car model.
+
+        Queries active supplier offers to determine the lowest price available
+        for each car model from active suppliers.
+
+        Returns:
+            Mapping of car model names to their best supplier offers.
+            Format: {model_name: {'supplier': str, 'price': Decimal}}
+
+        Example:
+        {
+            'Model S': {'supplier': 'Tesla Direct', 'price': Decimal('79999.99')},
+            'Camry': {'supplier': 'Toyota Wholesale', 'price': Decimal('24999.00')}
+        }
+        """
         best_offers = (
             SupplierOffer.objects.filter(is_active=True, supplier__is_active=True)
             .values("car__model_name")
@@ -111,7 +134,7 @@ class DealershipPromotion(models.Model):
     description = models.TextField(blank=True)
     cars = models.ManyToManyField(Car, related_name="dealership_promotions", blank=True)
     discount_percent = models.DecimalField(
-        max_digits=3,
+        max_digits=5,
         decimal_places=2,
         default=0.00,
         validators=[MinValueValidator(0), MaxValueValidator(100)],
@@ -134,7 +157,12 @@ class DealershipSaleHistory(models.Model):
     )
     car = models.ForeignKey(Car, on_delete=models.CASCADE)
     buyer = models.ForeignKey(User, on_delete=models.CASCADE)
-    price = models.DecimalField(max_digits=12, decimal_places=2)
+    price = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        validators=[validate_positive_value],
+        help_text="Balance must be greater than 0",
+    )
     sale_date = models.DateTimeField(auto_now_add=True)
 
     class Meta:
