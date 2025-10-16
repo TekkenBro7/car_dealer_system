@@ -1,0 +1,23 @@
+# Temp files
+__pycache__/
+*.pyc
+*.pyo
+*.spec
+
+# Virtual environment
+venv/
+.env
+.git
+.gitignore
+
+# logs and cache
+*.log
+.pytest_cache/
+.mypy_cache
+
+# files ide
+.vscode/
+.idea/
+tests/
+.git
+.gitignore
