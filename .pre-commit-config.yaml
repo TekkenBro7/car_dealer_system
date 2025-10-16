@@ -41,3 +41,11 @@ repos:
         args: [--django-settings-module=core.settings]
         exclude: |
           migrations/|__pycache__|\.git|\.pytest_cache|\.mypy_cache|node_modules|build|lib|\.idea|\.vscode|\.ruff_cache
+      
+      - id: pytest
+        name: pytest
+        entry: pipenv run pytest src
+        language: system
+        types: [python]
+        pass_filenames: false
+        always_run: true
