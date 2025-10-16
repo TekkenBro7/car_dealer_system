@@ -27,6 +27,8 @@ disable=
     C0103,  # invalid-name
     R0912,  # too many branches
     C0415,  # import outside toplevel
+    R0903,  # too-few-public-methods
+    W0611,  # unused import
 
 [FORMAT]
 max-line-length=100
