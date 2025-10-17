@@ -31,6 +31,8 @@ disable=
     R0903,  # too-few-public-methods
     W0611,  # unused import
     W0621,  # redefining name
+    W0718,  # catching general exception
+    R0901,  # too many ancestors
 
 [FORMAT]
 max-line-length=100
