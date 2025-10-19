@@ -90,7 +90,7 @@ class SupplierPromotionListSerializer(serializers.ModelSerializer):
 
         if start_date and end_date and start_date > end_date:
             raise serializers.ValidationError(
-                {"end_date": "End date must be after start date."}
+                {"error": "End date must be after start date."}
             )
         return attrs
 
