@@ -1,11 +1,12 @@
 from django.db import models
+from django_countries.fields import CountryField
 
 from core.abstract_models import TimeStampedModel
 
 
 class CarBrand(TimeStampedModel):
     name = models.CharField(max_length=100, unique=True)
-    country = models.CharField(max_length=50, blank=True, null=True)
+    country = CountryField(blank=True, null=True)
 
     class Meta:
         verbose_name = "Car Brand"

@@ -6,13 +6,13 @@ from cars.models import BodyType, Car, CarBrand
 
 class CarBrandModelTest(TestCase):
     def setUp(self) -> None:
-        self.brand_data = {"name": "Toyota", "country": "Japan"}
+        self.brand_data = {"name": "Toyota", "country": "JP"}
 
     def test_car_brand_creation(self) -> None:
         brand = CarBrand.objects.create(**self.brand_data)
 
         self.assertEqual(brand.name, "Toyota")
-        self.assertEqual(brand.country, "Japan")
+        self.assertEqual(brand.country, "JP")
         self.assertIsNotNone(brand.created_at)
         self.assertIsNotNone(brand.updated_at)
 
@@ -31,7 +31,7 @@ class CarBrandModelTest(TestCase):
         brand_without_country = CarBrand.objects.create(name="Tesla")
 
         self.assertEqual(brand_without_country.name, "Tesla")
-        self.assertIsNone(brand_without_country.country)
+        self.assertIsNone(brand_without_country.country.code)
 
 
 class BodyTypeModelTest(TestCase):
@@ -59,7 +59,7 @@ class BodyTypeModelTest(TestCase):
 
 class CarModelsTest(TestCase):
     def setUp(self) -> None:
-        self.brand = CarBrand.objects.create(name="Toyota", country="Japan")
+        self.brand = CarBrand.objects.create(name="Toyota", country="JP")
         self.body_type = BodyType.objects.create(name="Sedan")
 
     def test_car_creation(self) -> None:
@@ -83,7 +83,7 @@ class CarModelsTest(TestCase):
             )
 
     def test_car_unique_together_different_brands(self) -> None:
-        honda = CarBrand.objects.create(name="Honda", country="Japan")
+        honda = CarBrand.objects.create(name="Honda", country="JP")
         honda_camry = Car.objects.create(
             brand=honda, body_type=self.body_type, model_name="Camry"
         )

@@ -21,7 +21,7 @@ from users.models import User
 
 @pytest.fixture
 def car_brand() -> CarBrand:
-    return CarBrand.objects.create(name="Toyota", country="Japan")
+    return CarBrand.objects.create(name="Toyota", country="JP")
 
 
 @pytest.fixture
