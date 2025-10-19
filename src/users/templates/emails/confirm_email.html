@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Подтверждение регистрации</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f8f9fa;
+            color: #333;
+            padding: 40px;
+        }
+        .container {
+            background: #fff;
+            max-width: 600px;
+            margin: 0 auto;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+        }
+        h1 {
+            color: #0056b3;
+        }
+        a.confirm-btn {
+            display: inline-block;
+            background: #007bff;
+            color: white;
+            text-decoration: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+        a.confirm-btn:hover {
+            background: #0056b3;
+        }
+        .footer {
+            margin-top: 30px;
+            font-size: 13px;
+            color: #777;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Добро пожаловать, {{ username }}!</h1>
+    <p>Спасибо за регистрацию в <strong>Car Dealer System</strong>.</p>
+    <p>Для завершения регистрации подтвердите свой адрес электронной почты, нажав на кнопку ниже:</p>
+    <p>
+        <a href="{{ confirm_url }}" class="confirm-btn">Подтвердить Email</a>
+    </p>
+    <p>Если вы не регистрировались в нашем сервисе, просто проигнорируйте это письмо.</p>
+    <div class="footer">
+        © 2025 Car Dealer System. Все права защищены.
+    </div>
+</div>
+</body>
+</html>

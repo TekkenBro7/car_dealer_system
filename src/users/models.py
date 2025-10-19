@@ -1,4 +1,4 @@
-from typing import Any, TypeVar
+from typing import Any
 
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.models import UserManager as DjangoUserManager
@@ -6,8 +6,6 @@ from django.db import models
 
 from core.abstract_models import TimeStampedModel
 from users.validators import validate_positive_value
-
-_UserType = TypeVar("_UserType", bound="User")
 
 
 class UserManager(DjangoUserManager):
