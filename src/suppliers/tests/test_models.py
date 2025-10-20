@@ -30,7 +30,7 @@ def supplier() -> Supplier:
 
 @pytest.fixture
 def car_brand() -> CarBrand:
-    return CarBrand.objects.create(name="Toyota", country="Japan")
+    return CarBrand.objects.create(name="Toyota", country="JP")
 
 
 @pytest.fixture
@@ -101,6 +101,11 @@ class TestSupplierModel:
         )
 
         assert supplier.founded_year == 1990
+
+    def test_supplier_with_incorrect_founded_year(self) -> None:
+        with pytest.raises(ValidationError):
+            supplier = Supplier(name="Future Supplier", country="DE", founded_year=2050)
+            supplier.full_clean()
 
 
 @pytest.mark.django_db
@@ -224,7 +229,7 @@ class TestSupplierPromotionModel:
     def test_supplier_promotion_multiple_cars(
         self, promotion_data: dict[str, Any]
     ) -> None:
-        brand = CarBrand.objects.create(name="Honda", country="Japan")
+        brand = CarBrand.objects.create(name="Honda", country="JP")
         body_type = BodyType.objects.create(name="SUV")
         cars = [
             Car.objects.create(

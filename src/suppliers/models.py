@@ -5,14 +5,16 @@ from django_countries.fields import CountryField
 
 from cars.models import Car
 from core.abstract_models import TimeStampedModel
-from suppliers.validators import validate_positive_value
+from suppliers.validators import validate_founded_year, validate_positive_value
 
 User = get_user_model()
 
 
 class Supplier(TimeStampedModel):
     name = models.CharField(max_length=255, unique=True)
-    founded_year = models.PositiveIntegerField(null=True, blank=True)
+    founded_year = models.PositiveIntegerField(
+        null=True, blank=True, validators=[validate_founded_year]
+    )
     country = CountryField()
     contact_email = models.EmailField(blank=True)
     description = models.TextField(blank=True)
@@ -60,8 +62,8 @@ class SupplierPromotion(TimeStampedModel):
         validators=[MinValueValidator(0), MaxValueValidator(100)],
         help_text="Discount rate from 0 to 100",
     )
-    start_date = models.DateTimeField()
-    end_date = models.DateTimeField()
+    start_date = models.DateField()
+    end_date = models.DateField()
 
     class Meta:
         verbose_name = "Supplier Promotion"
