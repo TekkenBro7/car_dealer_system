@@ -1,6 +1,7 @@
 from rest_framework import viewsets
 from rest_framework.serializers import Serializer
 
+from core.enums import ViewAction
 from dealerships.models import (
     Dealership,
     DealershipPromotion,
@@ -30,7 +31,7 @@ class InventoryViewSet(viewsets.ModelViewSet):
     queryset = Inventory.objects.select_related("dealership", "car")
 
     def get_serializer_class(self) -> type[Serializer]:
-        if self.action == "retrieve":
+        if self.action == ViewAction.RETRIEVE:
             return InventoryDetailSerializer
         return InventoryListSerializer
 
@@ -39,7 +40,7 @@ class PreferredModelViewSet(viewsets.ModelViewSet):
     queryset = PreferredModel.objects.select_related("dealership", "car")
 
     def get_serializer_class(self) -> type[Serializer]:
-        if self.action == "retrieve":
+        if self.action == ViewAction.RETRIEVE:
             return PreferredModelDetailSerializer
         return PreferredModelListSerializer
 
@@ -50,7 +51,7 @@ class DealershipPromotionViewSet(viewsets.ModelViewSet):
     )
 
     def get_serializer_class(self) -> type[Serializer]:
-        if self.action == "retrieve":
+        if self.action == ViewAction.RETRIEVE:
             return DealershipPromotionDetailSerializer
         return DealershipPromotionListSerializer
 
@@ -61,6 +62,6 @@ class DealershipSaleHistoryViewSet(viewsets.ModelViewSet):
     )
 
     def get_serializer_class(self) -> type[Serializer]:
-        if self.action == "retrieve":
+        if self.action == ViewAction.RETRIEVE:
             return DealershipSaleHistoryDetailSerializer
         return DealershipSaleHistoryListSerializer

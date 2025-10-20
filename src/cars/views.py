@@ -8,6 +8,7 @@ from cars.serializers import (
     CarDetailSerializer,
     CarListSerializer,
 )
+from core.enums import ViewAction
 
 
 class CarBrandViewSet(viewsets.ModelViewSet):
@@ -24,6 +25,6 @@ class CarViewSet(viewsets.ModelViewSet):
     queryset = Car.objects.select_related("brand", "body_type")
 
     def get_serializer_class(self) -> type[Serializer]:
-        if self.action == "retrieve":
+        if self.action == ViewAction.RETRIEVE:
             return CarDetailSerializer
         return CarListSerializer

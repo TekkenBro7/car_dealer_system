@@ -1,6 +1,7 @@
 from rest_framework import viewsets
 from rest_framework.serializers import Serializer
 
+from core.enums import ViewAction
 from suppliers.models import (
     Supplier,
     SupplierOffer,
@@ -27,7 +28,7 @@ class SupplierOfferViewSet(viewsets.ModelViewSet):
     queryset = SupplierOffer.objects.select_related("supplier", "car")
 
     def get_serializer_class(self) -> type[Serializer]:
-        if self.action == "retrieve":
+        if self.action == ViewAction.RETRIEVE:
             return SupplierOfferDetailSerializer
         return SupplierOfferListSerializer
 
@@ -38,7 +39,7 @@ class SupplierPromotionViewSet(viewsets.ModelViewSet):
     )
 
     def get_serializer_class(self) -> type[Serializer]:
-        if self.action == "retrieve":
+        if self.action == ViewAction.RETRIEVE:
             return SupplierPromotionDetailSerializer
         return SupplierPromotionListSerializer
 
@@ -49,6 +50,6 @@ class SupplierSaleHistoryViewSet(viewsets.ModelViewSet):
     )
 
     def get_serializer_class(self) -> type[Serializer]:
-        if self.action == "retrieve":
+        if self.action == ViewAction.RETRIEVE:
             return SupplierSaleHistoryDetailSerializer
         return SupplierSaleHistoryListSerializer
