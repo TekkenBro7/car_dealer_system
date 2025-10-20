@@ -29,6 +29,7 @@ class Dealership(TimeStampedModel):
     class Meta:
         verbose_name = "Dealership"
         verbose_name_plural = "Dealerships"
+        unique_together = ["name", "country", "city"]
 
     def __str__(self) -> str:
         return self.name
@@ -96,7 +97,7 @@ class Dealership(TimeStampedModel):
         )
 
 
-class Inventory(models.Model):
+class Inventory(TimeStampedModel):
     dealership = models.ForeignKey(
         Dealership, on_delete=models.CASCADE, related_name="inventory"
     )
@@ -106,12 +107,13 @@ class Inventory(models.Model):
     class Meta:
         verbose_name = "Inventory"
         verbose_name_plural = "Inventories"
+        unique_together = ["dealership", "car"]
 
     def __str__(self) -> str:
         return f"{self.dealership.name}: {self.car.model_name} ({self.quantity})"
 
 
-class PreferredModel(models.Model):
+class PreferredModel(TimeStampedModel):
     dealership = models.ForeignKey(
         Dealership, on_delete=models.CASCADE, related_name="preferred_models"
     )
@@ -121,12 +123,13 @@ class PreferredModel(models.Model):
     class Meta:
         verbose_name = "Preffered Model"
         verbose_name_plural = "Preffered Models"
+        unique_together = ["dealership", "car"]
 
     def __str__(self) -> str:
         return f"{self.dealership.name} — {self.car.model_name}"
 
 
-class DealershipPromotion(models.Model):
+class DealershipPromotion(TimeStampedModel):
     dealership = models.ForeignKey(
         Dealership, on_delete=models.CASCADE, related_name="promotions"
     )
@@ -140,8 +143,8 @@ class DealershipPromotion(models.Model):
         validators=[MinValueValidator(0), MaxValueValidator(100)],
         help_text="Discount rate from 0 to 100",
     )
-    start_date = models.DateTimeField()
-    end_date = models.DateTimeField()
+    start_date = models.DateField()
+    end_date = models.DateField()
 
     class Meta:
         verbose_name = "Dealership Promotion"
@@ -151,7 +154,7 @@ class DealershipPromotion(models.Model):
         return f"{self.title} @ {self.dealership.name} ({self.discount_percent}%)"
 
 
-class DealershipSaleHistory(models.Model):
+class DealershipSaleHistory(TimeStampedModel):
     dealership = models.ForeignKey(
         Dealership, on_delete=models.CASCADE, related_name="sales_history"
     )

@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework.serializers import Serializer
 from rest_framework.views import APIView
 
+from core.enums import ViewAction
 from users.models import User, UserProfile
 from users.serializers import (
     RegisterSerializer,
@@ -18,7 +19,7 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
 
     def get_serializer_class(self) -> type[Serializer]:
-        if self.action == "create":
+        if self.action == ViewAction.CREATE:
             return RegisterSerializer
         return UserSerializer
 

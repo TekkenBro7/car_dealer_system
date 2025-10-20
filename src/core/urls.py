@@ -9,6 +9,8 @@ urlpatterns: list[URLPattern | URLResolver] = [
     path("api/", include("users.urls")),
     path("api/", include("cars.urls")),
     path("api/", include("suppliers.urls")),
+    path("api/", include("dealerships.urls")),
+    path("api/", include("offers.urls")),
 ]
 
 if settings.DEBUG:

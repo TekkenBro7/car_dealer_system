@@ -1,0 +1,9 @@
+from enum import StrEnum
+
+
+class ViewAction(StrEnum):
+    LIST = "list"
+    RETRIEVE = "retrieve"
+    CREATE = "create"
+    UPDATE = "update"
+    PARTIAL_UPDATE = "partial_update"
