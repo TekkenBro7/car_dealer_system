@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from rest_framework.serializers import Serializer
 from rest_framework.views import APIView
 
+from core.enums import ViewAction
 from users.filters import UserFilter, UserProfileFilter
 from users.models import User, UserProfile
 from users.serializers import (
@@ -26,7 +27,7 @@ class UserViewSet(viewsets.ModelViewSet):
     ordering = ["-is_active", "-date_joined"]
 
     def get_serializer_class(self) -> type[Serializer]:
-        if self.action == "create":
+        if self.action == ViewAction.CREATE:
             return RegisterSerializer
         return UserSerializer
 

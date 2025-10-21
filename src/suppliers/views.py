@@ -3,6 +3,7 @@ from rest_framework import viewsets
 from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.serializers import Serializer
 
+from core.enums import ViewAction
 from suppliers.filters import (
     SupplierFilter,
     SupplierOfferFilter,
@@ -45,7 +46,7 @@ class SupplierOfferViewSet(viewsets.ModelViewSet):
     ordering = ["-is_active", "-created_at"]
 
     def get_serializer_class(self) -> type[Serializer]:
-        if self.action == "retrieve":
+        if self.action == ViewAction.RETRIEVE:
             return SupplierOfferDetailSerializer
         return SupplierOfferListSerializer
 
@@ -61,7 +62,7 @@ class SupplierPromotionViewSet(viewsets.ModelViewSet):
     ordering = ["-is_active", "-start_date"]
 
     def get_serializer_class(self) -> type[Serializer]:
-        if self.action == "retrieve":
+        if self.action == ViewAction.RETRIEVE:
             return SupplierPromotionDetailSerializer
         return SupplierPromotionListSerializer
 
@@ -82,6 +83,6 @@ class SupplierSaleHistoryViewSet(viewsets.ModelViewSet):
     ordering = ["-is_active", "-sale_date"]
 
     def get_serializer_class(self) -> type[Serializer]:
-        if self.action == "retrieve":
+        if self.action == ViewAction.RETRIEVE:
             return SupplierSaleHistoryDetailSerializer
         return SupplierSaleHistoryListSerializer

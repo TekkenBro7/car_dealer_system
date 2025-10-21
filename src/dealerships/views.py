@@ -3,6 +3,7 @@ from rest_framework import viewsets
 from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.serializers import Serializer
 
+from core.enums import ViewAction
 from dealerships.filters import (
     DealershipFilter,
     DealershipPromotionFilter,
@@ -49,7 +50,7 @@ class InventoryViewSet(viewsets.ModelViewSet):
     ordering = ["-is_active", "-quantity"]
 
     def get_serializer_class(self) -> type[Serializer]:
-        if self.action == "retrieve":
+        if self.action == ViewAction.RETRIEVE:
             return InventoryDetailSerializer
         return InventoryListSerializer
 
@@ -63,7 +64,7 @@ class PreferredModelViewSet(viewsets.ModelViewSet):
     ordering = ["-is_active", "-created_at"]
 
     def get_serializer_class(self) -> type[Serializer]:
-        if self.action == "retrieve":
+        if self.action == ViewAction.RETRIEVE:
             return PreferredModelDetailSerializer
         return PreferredModelListSerializer
 
@@ -79,7 +80,7 @@ class DealershipPromotionViewSet(viewsets.ModelViewSet):
     ordering = ["-is_active", "-start_date"]
 
     def get_serializer_class(self) -> type[Serializer]:
-        if self.action == "retrieve":
+        if self.action == ViewAction.RETRIEVE:
             return DealershipPromotionDetailSerializer
         return DealershipPromotionListSerializer
 
@@ -100,6 +101,6 @@ class DealershipSaleHistoryViewSet(viewsets.ModelViewSet):
     ordering = ["-is_active", "-sale_date"]
 
     def get_serializer_class(self) -> type[Serializer]:
-        if self.action == "retrieve":
+        if self.action == ViewAction.RETRIEVE:
             return DealershipSaleHistoryDetailSerializer
         return DealershipSaleHistoryListSerializer

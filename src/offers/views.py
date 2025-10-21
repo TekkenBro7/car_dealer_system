@@ -3,6 +3,7 @@ from rest_framework import viewsets
 from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.serializers import Serializer
 
+from core.enums import ViewAction
 from offers.filters import OfferFilter
 from offers.models import Offer
 from offers.serializers import OfferDetailSerializer, OfferListSerializer
@@ -17,6 +18,6 @@ class OfferViewSet(viewsets.ModelViewSet):
     ordering = ["-is_active", "-created_at"]
 
     def get_serializer_class(self) -> type[Serializer]:
-        if self.action == "retrieve":
+        if self.action == ViewAction.RETRIEVE:
             return OfferDetailSerializer
         return OfferListSerializer
