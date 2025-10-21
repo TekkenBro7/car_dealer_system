@@ -16,6 +16,7 @@ ALLOWED_HOSTS = env("ALLOWED_HOSTS")
 
 INSTALLED_APPS = [
     "rest_framework",
+    "django_filters",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -97,6 +98,14 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 AUTH_USER_MODEL = "users.User"
+
+REST_FRAMEWORK = {
+    "DEFAULT_FILTER_BACKENDS": [
+        "django_filters.rest_framework.DjangoFilterBackend",
+        "rest_framework.filters.SearchFilter",
+        "rest_framework.filters.OrderingFilter",
+    ],
+}
 
 LANGUAGE_CODE = "en-us"
 
