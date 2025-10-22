@@ -87,7 +87,7 @@ class SupplierSaleHistory(TimeStampedModel):
         validators=[validate_positive_value],
         help_text="Price must be greater than 0",
     )
-    sale_date = models.DateTimeField(auto_now_add=True)
+    sale_date = models.DateField(auto_now_add=True)
 
     class Meta:
         verbose_name = "Supplier Sale History"

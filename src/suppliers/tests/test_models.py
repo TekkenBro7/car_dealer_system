@@ -331,6 +331,4 @@ class TestSupplierSaleHistoryModel:
         )
 
         assert sale.sale_date is not None
-
-        time_diff = timezone.now() - sale.sale_date
-        assert time_diff.total_seconds() < 5
+        assert sale.sale_date == timezone.now().date()
