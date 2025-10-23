@@ -33,7 +33,6 @@ class UserViewSet(viewsets.ModelViewSet):
 
 
 class UserProfileViewSet(
-    mixins.CreateModelMixin,
     mixins.RetrieveModelMixin,
     mixins.ListModelMixin,
     mixins.UpdateModelMixin,
