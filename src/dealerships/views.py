@@ -18,6 +18,7 @@ from dealerships.models import (
     Inventory,
     PreferredModel,
 )
+from dealerships.permissions import IsAdminOrReadOnly
 from dealerships.serializers import (
     DealershipPromotionDetailSerializer,
     DealershipPromotionListSerializer,
@@ -33,6 +34,7 @@ from dealerships.serializers import (
 
 class DealershipViewSet(viewsets.ModelViewSet):
     queryset = Dealership.objects.all()
+    permission_classes = [IsAdminOrReadOnly]
     serializer_class = DealershipSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = DealershipFilter
@@ -43,6 +45,7 @@ class DealershipViewSet(viewsets.ModelViewSet):
 
 class InventoryViewSet(viewsets.ModelViewSet):
     queryset = Inventory.objects.select_related("dealership", "car")
+    permission_classes = [IsAdminOrReadOnly]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = InventoryFilter
     search_fields = ["dealership__name", "car__model_name", "is_active"]
@@ -56,6 +59,7 @@ class InventoryViewSet(viewsets.ModelViewSet):
 
 
 class PreferredModelViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAdminOrReadOnly]
     queryset = PreferredModel.objects.select_related("dealership", "car")
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = PreferredModelFilter
@@ -73,6 +77,7 @@ class DealershipPromotionViewSet(viewsets.ModelViewSet):
     queryset = DealershipPromotion.objects.prefetch_related("cars").select_related(
         "dealership"
     )
+    permission_classes = [IsAdminOrReadOnly]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = DealershipPromotionFilter
     search_fields = ["title", "dealership__name", "description", "is_active"]
@@ -89,6 +94,7 @@ class DealershipSaleHistoryViewSet(viewsets.ModelViewSet):
     queryset = DealershipSaleHistory.objects.select_related(
         "dealership", "car", "buyer"
     )
+    permission_classes = [IsAdminOrReadOnly]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = DealershipSaleHistoryFilter
     search_fields = [

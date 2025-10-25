@@ -1,11 +1,23 @@
 import os
+from datetime import timedelta
 from pathlib import Path
 
 import environ
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
-env = environ.Env(DEBUG=(bool, False), ALLOWED_HOSTS=(list, []), DB_PORT=(int, 5432))
+env = environ.Env(
+    DEBUG=(bool, False),
+    ALLOWED_HOSTS=(list, []),
+    DB_PORT=(int, 5432),
+    EMAIL_PORT=(int, 587),
+    EMAIL_USE_TLS=(bool, True),
+    JWT_ACCESS_TOKEN_LIFETIME_SECONDS=(int, 3600),
+    JWT_REFRESH_TOKEN_LIFETIME_SECONDS=(int, 86400),
+    JWT_ROTATE_REFRESH_TOKENS=(bool, True),
+    JWT_BLACKLIST_AFTER_ROTATION=(bool, True),
+    JWT_UPDATE_LAST_LOGIN=(bool, True),
+)
 environ.Env.read_env(os.path.join(BASE_DIR, ".env"), overwrite=True)
 
 SECRET_KEY = env("SECRET_KEY")
@@ -15,7 +27,10 @@ DEBUG = env("DEBUG")
 ALLOWED_HOSTS = env("ALLOWED_HOSTS")
 
 INSTALLED_APPS = [
+    "drf_yasg",
     "rest_framework",
+    "rest_framework_simplejwt",
+    "rest_framework_simplejwt.token_blacklist",
     "django_filters",
     "django.contrib.admin",
     "django.contrib.auth",
@@ -100,6 +115,10 @@ AUTH_PASSWORD_VALIDATORS = [
 AUTH_USER_MODEL = "users.User"
 
 REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ),
+    "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
     "DEFAULT_FILTER_BACKENDS": [
         "django_filters.rest_framework.DjangoFilterBackend",
         "rest_framework.filters.SearchFilter",
@@ -168,8 +187,6 @@ LOGGING = {
     },
 }
 
-# Email notification
-
 EMAIL_BACKEND = env("EMAIL_BACKEND")
 EMAIL_HOST = env("EMAIL_HOST")
 EMAIL_PORT = env("EMAIL_PORT")
@@ -179,3 +196,27 @@ EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL")
 
 BACKEND_URL = env("BACKEND_URL")
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(
+        seconds=env("JWT_ACCESS_TOKEN_LIFETIME_SECONDS")
+    ),
+    "REFRESH_TOKEN_LIFETIME": timedelta(
+        seconds=env("JWT_REFRESH_TOKEN_LIFETIME_SECONDS")
+    ),
+    "ROTATE_REFRESH_TOKENS": env("JWT_ROTATE_REFRESH_TOKENS"),
+    "BLACKLIST_AFTER_ROTATION": env("JWT_BLACKLIST_AFTER_ROTATION"),
+    "UPDATE_LAST_LOGIN": env("JWT_UPDATE_LAST_LOGIN"),
+}
+
+SWAGGER_SETTINGS = {
+    "SECURITY_DEFINITIONS": {
+        "Bearer": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header",
+            "description": 'JWT Auth header. Example: "Bearer <access token>"',
+        }
+    },
+    "USE_SESSION_AUTH": False,
+}

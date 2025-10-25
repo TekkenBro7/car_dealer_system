@@ -1,13 +1,28 @@
 import pytest
 from rest_framework import status
 from rest_framework.test import APIClient
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from cars.models import BodyType, Car, CarBrand
+from users.models import User
 
 
 @pytest.fixture
-def api_client() -> APIClient:
-    return APIClient()
+def regular_user() -> User:
+    return User.objects.create_user(
+        username="testuser",
+        email="test@example.com",
+        password="testpass123",
+        role="admin",
+    )
+
+
+@pytest.fixture
+def api_client(regular_user: User) -> APIClient:
+    client = APIClient()
+    refresh = RefreshToken.for_user(regular_user)
+    client.credentials(HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}")
+    return client
 
 
 @pytest.fixture
