@@ -2,13 +2,27 @@
 import pytest
 from rest_framework import status
 from rest_framework.test import APIClient
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from users.models import User, UserProfile, UserRoles
 
 
 @pytest.fixture
-def api_client() -> APIClient:
-    return APIClient()
+def regular_user() -> User:
+    return User.objects.create_user(
+        username="testuser",
+        email="test@example.com",
+        password="testpass123",
+        role="admin",
+    )
+
+
+@pytest.fixture
+def api_client(regular_user: User) -> APIClient:
+    client = APIClient()
+    refresh = RefreshToken.for_user(regular_user)
+    client.credentials(HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}")
+    return client
 
 
 # pylint: disable=too-many-locals
@@ -91,7 +105,7 @@ class TestUserFiltering:
     ) -> None:
         response = api_client.get("/api/users/", {"email_confirmed": "false"})
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.data) == 1
+        assert len(response.data) == 2
         assert response.data[0]["email_confirmed"] is False
 
 
@@ -110,7 +124,7 @@ class TestUserSearch:
     ) -> None:
         response = api_client.get("/api/users/", {"search": "example.com"})
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.data) == 4
+        assert len(response.data) == 5
 
     def test_search_users_case_insensitive(
         self, api_client: APIClient, test_users: list[User]
@@ -154,7 +168,7 @@ class TestUserProfileFiltering:
     ) -> None:
         response = api_client.get("/api/profiles/", {"balance_max": 800})
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.data) == 2
+        assert len(response.data) == 3
 
     def test_filter_profiles_by_balance_range(
         self, api_client: APIClient, test_profiles: list[UserProfile]
@@ -170,14 +184,14 @@ class TestUserProfileFiltering:
     ) -> None:
         response = api_client.get("/api/profiles/", {"total_spent_max": 4000})
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.data) == 2
+        assert len(response.data) == 3
 
     def test_filter_profiles_by_purchase_count_max(
         self, api_client: APIClient, test_profiles: list[UserProfile]
     ) -> None:
         response = api_client.get("/api/profiles/", {"purchase_count_max": 4})
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.data) == 1
+        assert len(response.data) == 2
 
 
 @pytest.mark.django_db

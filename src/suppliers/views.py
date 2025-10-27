@@ -16,6 +16,7 @@ from suppliers.models import (
     SupplierPromotion,
     SupplierSaleHistory,
 )
+from suppliers.permissions import IsAdminOrReadOnly
 from suppliers.serializers import (
     SupplierOfferDetailSerializer,
     SupplierOfferListSerializer,
@@ -29,6 +30,7 @@ from suppliers.serializers import (
 
 class SupplierViewSet(viewsets.ModelViewSet):
     queryset = Supplier.objects.all()
+    permission_classes = [IsAdminOrReadOnly]
     serializer_class = SupplierSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = SupplierFilter
@@ -39,6 +41,7 @@ class SupplierViewSet(viewsets.ModelViewSet):
 
 class SupplierOfferViewSet(viewsets.ModelViewSet):
     queryset = SupplierOffer.objects.select_related("supplier", "car")
+    permission_classes = [IsAdminOrReadOnly]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = SupplierOfferFilter
     search_fields = ["supplier__name", "car__model_name", "is_active"]
@@ -55,6 +58,7 @@ class SupplierPromotionViewSet(viewsets.ModelViewSet):
     queryset = SupplierPromotion.objects.prefetch_related("cars").select_related(
         "supplier"
     )
+    permission_classes = [IsAdminOrReadOnly]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = SupplierPromotionFilter
     search_fields = ["title", "supplier__name", "description", "is_active"]
@@ -71,6 +75,7 @@ class SupplierSaleHistoryViewSet(viewsets.ModelViewSet):
     queryset = SupplierSaleHistory.objects.select_related(
         "supplier", "car", "dealership"
     )
+    permission_classes = [IsAdminOrReadOnly]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = SupplierSaleHistoryFilter
     search_fields = [

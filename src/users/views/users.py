@@ -9,6 +9,7 @@ from rest_framework.views import APIView
 from core.enums import ViewAction
 from users.filters import UserFilter, UserProfileFilter
 from users.models import User, UserProfile
+from users.permissions import IsAdminOrSelf
 from users.serializers import (
     RegisterSerializer,
     UserProfileSerializer,
@@ -19,6 +20,7 @@ from users.services.email_service import confirm_user_email
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all().select_related("user_profile")
+    permission_classes = [IsAdminOrSelf]
     serializer_class = UserSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = UserFilter
@@ -39,6 +41,7 @@ class UserProfileViewSet(
     viewsets.GenericViewSet,
 ):
     queryset = UserProfile.objects.all()
+    permission_classes = [IsAdminOrSelf]
     serializer_class = UserProfileSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = UserProfileFilter

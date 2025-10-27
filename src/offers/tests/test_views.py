@@ -1,6 +1,7 @@
 import pytest
 from rest_framework import status
 from rest_framework.test import APIClient
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from cars.models import BodyType, Car, CarBrand
 from offers.models import Offer, OfferStatus
@@ -8,8 +9,21 @@ from users.models import User
 
 
 @pytest.fixture
-def api_client() -> APIClient:
-    return APIClient()
+def user() -> User:
+    return User.objects.create_user(
+        username="testuser",
+        email="test@example.com",
+        password="testpass123",
+        role="admin",
+    )
+
+
+@pytest.fixture
+def api_client(user: User) -> APIClient:
+    client = APIClient()
+    refresh = RefreshToken.for_user(user)
+    client.credentials(HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}")
+    return client
 
 
 @pytest.fixture
@@ -25,13 +39,6 @@ def body_type() -> BodyType:
 @pytest.fixture
 def car(car_brand: CarBrand, body_type: BodyType) -> Car:
     return Car.objects.create(brand=car_brand, model_name="Camry", body_type=body_type)
-
-
-@pytest.fixture
-def user() -> User:
-    return User.objects.create_user(
-        username="testuser", email="test@example.com", password="testpass123"
-    )
 
 
 @pytest.fixture
