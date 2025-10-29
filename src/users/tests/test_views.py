@@ -65,14 +65,26 @@ class TestUserViewSet:
         mock_send_email.assert_called_once()
         assert User.objects.filter(username="newuser").exists()
 
-    def test_update_user(self, api_client: APIClient, regular_user: User) -> None:
+    @patch("users.serializers.send_username_change_email")
+    @patch("users.serializers.username_verification.generate_username_token")
+    def test_update_user(
+        self,
+        mock_generate_token: MagicMock,
+        mock_send_email: MagicMock,
+        api_client: APIClient,
+        regular_user: User,
+    ) -> None:
+        mock_generate_token.return_value = "test-token"
+        mock_send_email.return_value = None
+
         update_data = {"username": "updateduser"}
         response = api_client.patch(f"/api/users/{regular_user.id}/", update_data)
         assert response.status_code == status.HTTP_200_OK
-        assert response.data["username"] == "updateduser"
 
         regular_user.refresh_from_db()
-        assert regular_user.username == "updateduser"
+        assert regular_user.username == "testuser"
+
+        mock_send_email.assert_called_once()
 
     def test_delete_user(self, api_client: APIClient, regular_user: User) -> None:
         response = api_client.delete(f"/api/users/{regular_user.id}/")
@@ -153,7 +165,7 @@ class TestConfirmEmailView:
     ) -> None:
         mock_verify_token.return_value = regular_user.id
 
-        response = api_client.get("/api/confirm-email/valid-token/")
+        response = api_client.get("/api/auth/confirm-email/valid-token/")
         assert response.status_code == status.HTTP_200_OK
         assert response.data["detail"] == "Email successfully confirmed."
 
@@ -166,7 +178,7 @@ class TestConfirmEmailView:
     ) -> None:
         mock_verify_token.return_value = None
 
-        response = api_client.get("/api/confirm-email/invalid-token/")
+        response = api_client.get("/api/auth/confirm-email/invalid-token/")
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert response.data["detail"] == "The link is invalid or outdated."
 
@@ -176,6 +188,6 @@ class TestConfirmEmailView:
     ) -> None:
         mock_verify_token.return_value = 99999
 
-        response = api_client.get("/api/confirm-email/valid-token/")
+        response = api_client.get("/api/auth/confirm-email/valid-token/")
         assert response.status_code == status.HTTP_404_NOT_FOUND
         assert response.data["detail"] == "The user was not found."
