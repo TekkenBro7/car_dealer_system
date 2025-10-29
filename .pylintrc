@@ -34,6 +34,7 @@ disable=
     W0718,  # catching general exception
     R0901,  # too many ancestors
     R0801,  # similar lines
+    W0223,  # abstract-method
 
 [FORMAT]
 max-line-length=100

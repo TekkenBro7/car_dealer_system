@@ -6,12 +6,14 @@ from rest_framework.serializers import Serializer
 from core.enums import ViewAction
 from offers.filters import OfferFilter
 from offers.models import Offer
+from offers.permissions import HasConfirmedEmail, IsAdminOrSelf
 from offers.serializers import OfferDetailSerializer, OfferListSerializer
 
 
 class OfferViewSet(viewsets.ModelViewSet):
     queryset = Offer.objects.select_related("buyer", "car")
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    permission_classes = [IsAdminOrSelf, HasConfirmedEmail]
     filterset_class = OfferFilter
     search_fields = ["buyer__username", "car__model_name", "status", "is_active"]
     ordering_fields = ["max_price", "created_at", "updated_at", "is_active"]
