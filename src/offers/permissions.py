@@ -15,7 +15,7 @@ class IsAdminOrSelf(permissions.BasePermission):
         if not request.user.is_authenticated:
             return False
 
-        if action in ["list"]:
+        if action == ViewAction.LIST:
             return request.user.role == "admin"
 
         return True
