@@ -24,7 +24,7 @@ class IsAdminOrSelf(permissions.BasePermission):
         if getattr(request.user, "role", None) == "admin":
             return True
 
-        return obj.buyer == request.user
+        return obj == request.user
 
 
 class HasConfirmedEmail(permissions.BasePermission):
