@@ -1,3 +1,4 @@
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -24,6 +25,11 @@ def api_client(regular_user: User) -> APIClient:
     refresh = RefreshToken.for_user(regular_user)
     client.credentials(HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}")
     return client
+
+
+@pytest.fixture
+def unauthenticated_client() -> APIClient:
+    return APIClient()
 
 
 @pytest.mark.django_db
@@ -191,3 +197,177 @@ class TestConfirmEmailView:
         response = api_client.get("/api/auth/confirm-email/valid-token/")
         assert response.status_code == status.HTTP_404_NOT_FOUND
         assert response.data["detail"] == "The user was not found."
+
+
+@pytest.mark.django_db
+class TestConfirmUsernameView:
+    @patch("users.services.email_service.username_verification.verify_username_token")
+    def test_confirm_username_success(
+        self, mock_verify_token: MagicMock, api_client: APIClient, regular_user: User
+    ) -> None:
+        mock_verify_token.return_value = (regular_user.id, "newusername")
+
+        response = api_client.get("/api/auth/confirm-username/valid-token/")
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["detail"] == "Username successfully updated."
+
+        regular_user.refresh_from_db()
+        assert regular_user.username == "newusername"
+
+    @patch("users.services.email_service.username_verification.verify_username_token")
+    def test_confirm_username_invalid_token(
+        self, mock_verify_token: MagicMock, api_client: APIClient
+    ) -> None:
+        mock_verify_token.return_value = (None, None)
+
+        response = api_client.get("/api/auth/confirm-username/invalid-token/")
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.data["detail"] == "Invalid or expired token."
+
+    @patch("users.services.email_service.username_verification.verify_username_token")
+    def test_confirm_username_user_not_found(
+        self, mock_verify_token: MagicMock, api_client: APIClient
+    ) -> None:
+        mock_verify_token.return_value = (99999, "newusername")
+
+        response = api_client.get("/api/auth/confirm-username/valid-token/")
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert response.data["detail"] == "The user was not found."
+
+
+@pytest.mark.django_db
+class TestChangePasswordView:
+    def test_change_password_success(
+        self, api_client: APIClient, regular_user: User
+    ) -> None:
+        data = {"old_password": "testpass123", "new_password": "newpassword456"}
+
+        response = api_client.post("/api/auth/change-password/", data)
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["OK"] == "Password changed successfully."
+
+        regular_user.refresh_from_db()
+        assert regular_user.check_password("newpassword456")
+
+    # pylint: disable=unused-argument
+    def test_change_password_wrong_old_password(
+        self, api_client: APIClient, regular_user: User
+    ) -> None:
+        data = {"old_password": "wrongpassword", "new_password": "newpassword456"}
+
+        response = api_client.post("/api/auth/change-password/", data)
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "old_password" in response.data
+
+    # pylint: disable=unused-argument
+    def test_change_password_missing_fields(
+        self, api_client: APIClient, regular_user: User
+    ) -> None:
+        data = {"old_password": "testpass123"}
+
+        response = api_client.post("/api/auth/change-password/", data)
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "new_password" in response.data
+
+
+@pytest.mark.django_db
+class TestPasswordResetRequestView:
+    # pylint: disable=unused-argument
+    @patch("users.serializers.send_password_reset_email")
+    @patch(
+        "users.serializers.password_reset_verification.generate_password_reset_token"
+    )
+    def test_password_reset_request_success(
+        self,
+        mock_generate_token: MagicMock,
+        mock_send_email: MagicMock,
+        unauthenticated_client: APIClient,
+        regular_user: User,
+    ) -> None:
+        mock_generate_token.return_value = "test-token"
+        mock_send_email.return_value = None
+        data = {"email": "test@example.com"}
+
+        response = unauthenticated_client.post(
+            "/api/auth/reset-password-request/", data
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["OK"] == "Password reset link sent to your email."
+        mock_send_email.assert_called_once()
+
+    def test_password_reset_request_nonexistent_email(
+        self, unauthenticated_client: APIClient
+    ) -> None:
+        data = {"email": "nonexistent@example.com"}
+
+        response = unauthenticated_client.post(
+            "/api/auth/reset-password-request/", data
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "email" in response.data
+
+    def test_password_reset_request_missing_email(
+        self, unauthenticated_client: APIClient
+    ) -> None:
+        data: dict[str, Any] = {}
+
+        response = unauthenticated_client.post(
+            "/api/auth/reset-password-request/", data
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "email" in response.data
+
+
+@pytest.mark.django_db
+class TestPasswordResetConfirmView:
+    @patch("users.serializers.password_reset_verification.verify_password_reset_token")
+    def test_password_reset_confirm_success(
+        self,
+        mock_verify_token: MagicMock,
+        unauthenticated_client: APIClient,
+        regular_user: User,
+    ) -> None:
+        mock_verify_token.return_value = regular_user.id
+        data = {"token": "valid-reset-token", "new_password": "newpassword123"}
+
+        response = unauthenticated_client.post("/api/auth/reset-password/", data)
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["OK"] == "Password successfully reset."
+
+        regular_user.refresh_from_db()
+        assert regular_user.check_password("newpassword123")
+
+    @patch("users.serializers.password_reset_verification.verify_password_reset_token")
+    def test_password_reset_confirm_invalid_token(
+        self, mock_verify_token: MagicMock, unauthenticated_client: APIClient
+    ) -> None:
+        mock_verify_token.return_value = None
+        data = {"token": "invalid-token", "new_password": "newpassword123"}
+
+        response = unauthenticated_client.post("/api/auth/reset-password/", data)
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "non_field_errors" in response.data
+
+    @patch("users.serializers.password_reset_verification.verify_password_reset_token")
+    def test_password_reset_confirm_user_not_found(
+        self, mock_verify_token: MagicMock, unauthenticated_client: APIClient
+    ) -> None:
+        mock_verify_token.return_value = 99999
+        data = {"token": "valid-token", "new_password": "newpassword123"}
+
+        response = unauthenticated_client.post("/api/auth/reset-password/", data)
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "non_field_errors" in response.data
+
+    def test_password_reset_confirm_missing_fields(
+        self, unauthenticated_client: APIClient
+    ) -> None:
+        data = {"token": "valid-token"}
+
+        response = unauthenticated_client.post("/api/auth/reset-password/", data)
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "new_password" in response.data
