@@ -1,11 +1,10 @@
-from django.contrib.auth import get_user_model
 from django.db import models
 
 from cars.models import Car
 from core.abstract_models import TimeStampedModel
+from dealerships.models import Dealership
 from offers.validators import validate_positive_value
-
-User = get_user_model()
+from users.models import User
 
 
 class OfferStatus(models.TextChoices):
@@ -18,6 +17,13 @@ class OfferStatus(models.TextChoices):
 class Offer(TimeStampedModel):
     buyer = models.ForeignKey(User, on_delete=models.CASCADE, related_name="offers")
     car = models.ForeignKey(Car, on_delete=models.CASCADE)
+    dealership = models.ForeignKey(
+        Dealership,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="offers",
+    )
     max_price = models.DecimalField(
         max_digits=12,
         decimal_places=2,

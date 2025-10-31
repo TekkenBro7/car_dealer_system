@@ -1,0 +1,31 @@
+from typing import Any
+
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
+from dealerships.models import DealershipSaleHistory
+from offers.models import Offer, OfferStatus
+from users.models import UserProfile
+
+
+# pylint: disable=unused-argument
+@receiver(post_save, sender=Offer)
+def create_dealership_sale_history(
+    sender: type[Offer], instance: Offer, created: bool, **kwargs: Any
+) -> None:
+    # pylint: disable=no-member
+    if created or instance.status != OfferStatus.ACCEPTED.value:
+        return
+
+    DealershipSaleHistory.objects.create(
+        dealership=instance.dealership,
+        car=instance.car,
+        buyer=instance.buyer,
+        price=instance.max_price,
+    )
+
+    profile, _ = UserProfile.objects.get_or_create(user=instance.buyer)
+    profile.balance = profile.balance - instance.max_price
+    profile.total_spent += instance.max_price
+    profile.purchase_count += 1
+    profile.save()

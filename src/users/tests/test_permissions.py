@@ -4,7 +4,7 @@ from rest_framework.test import APIRequestFactory
 
 from core.enums import ViewAction
 from users.models import User
-from users.permissions import IsAdminOrSelf
+from users.permissions import IsAdminOrSelf, IsAdminUser
 
 
 @pytest.fixture
@@ -137,4 +137,37 @@ class TestIsAdminOrSelf:
         obj = admin_user
 
         result = permission.has_object_permission(request, None, obj)
+        assert result is False
+
+
+@pytest.mark.django_db
+class TestIsAdminUser:
+    def test_admin_user_has_permission(
+        self, api_request_factory: APIRequestFactory, admin_user: User
+    ) -> None:
+        permission = IsAdminUser()
+        request = api_request_factory.get("/api/admin-only/")
+        request.user = admin_user
+
+        result = permission.has_permission(request, None)
+        assert result is True
+
+    def test_regular_user_no_permission(
+        self, api_request_factory: APIRequestFactory, regular_user: User
+    ) -> None:
+        permission = IsAdminUser()
+        request = api_request_factory.get("/api/admin-only/")
+        request.user = regular_user
+
+        result = permission.has_permission(request, None)
+        assert result is False
+
+    def test_unauthenticated_user_no_permission(
+        self, api_request_factory: APIRequestFactory
+    ) -> None:
+        permission = IsAdminUser()
+        request = api_request_factory.get("/api/admin-only/")
+        request.user = AnonymousUser()
+
+        result = permission.has_permission(request, None)
         assert result is False

@@ -4,6 +4,7 @@ from rest_framework.routers import DefaultRouter
 from suppliers.views import (
     SupplierOfferViewSet,
     SupplierPromotionViewSet,
+    SupplierReportViewSet,
     SupplierSaleHistoryViewSet,
     SupplierViewSet,
 )
@@ -13,6 +14,7 @@ router.register("suppliers", SupplierViewSet)
 router.register("supplier-offers", SupplierOfferViewSet)
 router.register("supplier-promotions", SupplierPromotionViewSet)
 router.register("supplier-sales", SupplierSaleHistoryViewSet)
+router.register("supplier-reports", SupplierReportViewSet, basename="supplier-report")
 
 urlpatterns = [
     path("", include(router.urls)),

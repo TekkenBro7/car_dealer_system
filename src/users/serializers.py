@@ -1,7 +1,9 @@
 from typing import Any
 
+from django.db.models import Sum
 from rest_framework import serializers
 
+from dealerships.models import DealershipSaleHistory
 from users.models import User, UserProfile
 from users.services.email_service import (
     send_confirmation_email,
@@ -145,3 +147,27 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
         user.set_password(new_password)
         user.save()
         return user
+
+
+class BuyerReportSerializer(serializers.ModelSerializer):
+    total_spent = serializers.SerializerMethodField()
+    purchased_cars = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = ["id", "username", "total_spent", "purchased_cars"]
+
+    def get_total_spent(self, obj: User) -> float:
+        return (
+            DealershipSaleHistory.objects.filter(buyer=obj).aggregate(
+                total=Sum("price")
+            )["total"]
+            or 0
+        )
+
+    def get_purchased_cars(self, obj: User) -> list[str]:
+        return list(
+            DealershipSaleHistory.objects.filter(buyer=obj).values_list(
+                "car__model_name", flat=True
+            )
+        )

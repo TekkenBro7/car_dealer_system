@@ -1,6 +1,5 @@
 from typing import Any
 
-from django.contrib.auth import get_user_model
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import Avg, Count, Min, QuerySet, Sum
@@ -10,8 +9,7 @@ from cars.models import Car
 from core.abstract_models import TimeStampedModel
 from dealerships.validators import validate_positive_value
 from suppliers.models import SupplierOffer
-
-User = get_user_model()
+from users.models import User
 
 
 class Dealership(TimeStampedModel):
@@ -103,6 +101,7 @@ class Inventory(TimeStampedModel):
     )
     car = models.ForeignKey(Car, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField(default=0)
+    price = models.DecimalField(max_digits=12, decimal_places=2, default=0)
 
     class Meta:
         verbose_name = "Inventory"

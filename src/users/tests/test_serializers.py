@@ -2,8 +2,11 @@ from unittest.mock import MagicMock, patch
 
 from django.test import TestCase
 
+from cars.models import BodyType, Car, CarBrand
+from dealerships.models import Dealership, DealershipSaleHistory
 from users.models import User
 from users.serializers import (
+    BuyerReportSerializer,
     ChangePasswordSerializer,
     PasswordResetConfirmSerializer,
     PasswordResetRequestSerializer,
@@ -370,3 +373,104 @@ class TestPasswordResetConfirmSerializer(TestCase):
         serializer = PasswordResetConfirmSerializer()
         new_password_field = serializer.fields["new_password"]
         self.assertTrue(new_password_field.write_only)
+
+
+class TestBuyerReportSerializer(TestCase):
+    def setUp(self) -> None:
+        self.buyer = User.objects.create_user(
+            username="buyer", email="buyer@example.com", password="testpass123"
+        )
+
+        self.car_brand = CarBrand.objects.create(name="Toyota", country="JP")
+
+        self.body_type = BodyType.objects.create(name="Sedan")
+
+        self.car = Car.objects.create(
+            brand=self.car_brand, model_name="Camry", body_type=self.body_type
+        )
+
+        self.dealership = Dealership.objects.create(
+            name="Test Dealership", country="US", balance=100000.00
+        )
+
+    def test_total_spent_calculation(self) -> None:
+        DealershipSaleHistory.objects.create(
+            buyer=self.buyer, dealership=self.dealership, car=self.car, price=25000.00
+        )
+        DealershipSaleHistory.objects.create(
+            buyer=self.buyer, dealership=self.dealership, car=self.car, price=30000.00
+        )
+
+        serializer = BuyerReportSerializer(instance=self.buyer)
+        self.assertEqual(serializer.data["total_spent"], 55000.0)
+
+    def test_total_spent_no_purchases(self) -> None:
+        serializer = BuyerReportSerializer(instance=self.buyer)
+        self.assertEqual(serializer.data["total_spent"], 0)
+
+    def test_purchased_cars_calculation(self) -> None:
+        DealershipSaleHistory.objects.create(
+            buyer=self.buyer, dealership=self.dealership, car=self.car, price=25000.00
+        )
+
+        serializer = BuyerReportSerializer(instance=self.buyer)
+        purchased_cars = serializer.data["purchased_cars"]
+
+        self.assertIsInstance(purchased_cars, list)
+        self.assertEqual(len(purchased_cars), 1)
+        self.assertEqual(purchased_cars[0], "Camry")
+
+    def test_purchased_cars_no_purchases(self) -> None:
+        serializer = BuyerReportSerializer(instance=self.buyer)
+        purchased_cars = serializer.data["purchased_cars"]
+
+        self.assertIsInstance(purchased_cars, list)
+        self.assertEqual(len(purchased_cars), 0)
+
+    def test_purchased_cars_multiple_cars(self) -> None:
+        another_car = Car.objects.create(
+            brand=self.car_brand, model_name="Corolla", body_type=self.body_type
+        )
+
+        DealershipSaleHistory.objects.create(
+            buyer=self.buyer, dealership=self.dealership, car=self.car, price=25000.00
+        )
+        DealershipSaleHistory.objects.create(
+            buyer=self.buyer,
+            dealership=self.dealership,
+            car=another_car,
+            price=20000.00,
+        )
+
+        serializer = BuyerReportSerializer(instance=self.buyer)
+        purchased_cars = serializer.data["purchased_cars"]
+
+        self.assertIsInstance(purchased_cars, list)
+        self.assertEqual(len(purchased_cars), 2)
+        self.assertIn("Camry", purchased_cars)
+        self.assertIn("Corolla", purchased_cars)
+
+    def test_serializer_with_different_buyer(self) -> None:
+        another_buyer = User.objects.create_user(
+            username="another_buyer",
+            email="another@example.com",
+            password="testpass123",
+        )
+
+        DealershipSaleHistory.objects.create(
+            buyer=self.buyer, dealership=self.dealership, car=self.car, price=25000.00
+        )
+        DealershipSaleHistory.objects.create(
+            buyer=another_buyer,
+            dealership=self.dealership,
+            car=self.car,
+            price=30000.00,
+        )
+
+        serializer1 = BuyerReportSerializer(instance=self.buyer)
+        self.assertEqual(serializer1.data["total_spent"], 25000.0)
+        self.assertEqual(len(serializer1.data["purchased_cars"]), 1)
+
+        serializer2 = BuyerReportSerializer(instance=another_buyer)
+        self.assertEqual(serializer2.data["total_spent"], 30000.0)
+        self.assertEqual(len(serializer2.data["purchased_cars"]), 1)

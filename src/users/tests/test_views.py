@@ -6,6 +6,8 @@ from rest_framework import status
 from rest_framework.test import APIClient
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from cars.models import BodyType, Car, CarBrand
+from dealerships.models import Dealership, DealershipSaleHistory
 from users.models import User
 
 
@@ -20,6 +22,16 @@ def regular_user() -> User:
 
 
 @pytest.fixture
+def regular_user_buyer() -> User:
+    return User.objects.create_user(
+        username="buyeruser",
+        email="buyer@example.com",
+        password="testpass123",
+        role="buyer",
+    )
+
+
+@pytest.fixture
 def api_client(regular_user: User) -> APIClient:
     client = APIClient()
     refresh = RefreshToken.for_user(regular_user)
@@ -28,8 +40,38 @@ def api_client(regular_user: User) -> APIClient:
 
 
 @pytest.fixture
+def api_client_buyer(regular_user_buyer: User) -> APIClient:
+    client = APIClient()
+    refresh = RefreshToken.for_user(regular_user_buyer)
+    client.credentials(HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}")
+    return client
+
+
+@pytest.fixture
 def unauthenticated_client() -> APIClient:
     return APIClient()
+
+
+@pytest.fixture
+def car_brand() -> CarBrand:
+    return CarBrand.objects.create(name="Toyota", country="JP")
+
+
+@pytest.fixture
+def body_type() -> BodyType:
+    return BodyType.objects.create(name="Sedan")
+
+
+@pytest.fixture
+def car(car_brand: CarBrand, body_type: BodyType) -> Car:
+    return Car.objects.create(brand=car_brand, model_name="Camry", body_type=body_type)
+
+
+@pytest.fixture
+def dealership() -> Dealership:
+    return Dealership.objects.create(
+        name="Test Dealership", country="US", city="New York", balance=100000.00
+    )
 
 
 @pytest.mark.django_db
@@ -371,3 +413,100 @@ class TestPasswordResetConfirmView:
         response = unauthenticated_client.post("/api/auth/reset-password/", data)
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert "new_password" in response.data
+
+
+@pytest.mark.django_db
+class TestBuyerReportViewSet:
+    # pylint: disable=unused-argument
+    def test_list_buyer_reports_admin_access(
+        self, api_client: APIClient, regular_user: User
+    ) -> None:
+        response = api_client.get("/api/buyer-reports/")
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.data) >= 1
+        assert response.data[0]["username"] == "testuser"
+
+    def test_list_buyer_reports_regular_user_denied(
+        self, api_client_buyer: APIClient
+    ) -> None:
+        response = api_client_buyer.get("/api/buyer-reports/")
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_retrieve_buyer_report_admin_access(
+        self, api_client: APIClient, regular_user: User
+    ) -> None:
+        response = api_client.get(f"/api/buyer-reports/{regular_user.id}/")
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["username"] == "testuser"
+        assert response.data["total_spent"] == 0
+        assert response.data["purchased_cars"] == []
+
+    def test_retrieve_buyer_report_regular_user_denied(
+        self, api_client_buyer: APIClient, regular_user: User
+    ) -> None:
+        response = api_client_buyer.get(f"/api/buyer-reports/{regular_user.id}/")
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_buyer_report_with_purchase_data(
+        self,
+        api_client: APIClient,
+        regular_user: User,
+        car: Car,
+        dealership: Dealership,
+    ) -> None:
+        DealershipSaleHistory.objects.create(
+            buyer=regular_user, dealership=dealership, car=car, price=25000.00
+        )
+        DealershipSaleHistory.objects.create(
+            buyer=regular_user, dealership=dealership, car=car, price=30000.00
+        )
+
+        response = api_client.get(f"/api/buyer-reports/{regular_user.id}/")
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["total_spent"] == 55000.0
+        assert response.data["purchased_cars"] == ["Camry", "Camry"]
+
+    def test_buyer_report_with_multiple_cars(
+        self,
+        api_client: APIClient,
+        regular_user: User,
+        car_brand: CarBrand,
+        body_type: BodyType,
+        dealership: Dealership,
+    ) -> None:
+        car1 = Car.objects.create(
+            brand=car_brand, model_name="Camry", body_type=body_type
+        )
+        car2 = Car.objects.create(
+            brand=car_brand, model_name="Corolla", body_type=body_type
+        )
+
+        DealershipSaleHistory.objects.create(
+            buyer=regular_user, dealership=dealership, car=car1, price=25000.00
+        )
+        DealershipSaleHistory.objects.create(
+            buyer=regular_user, dealership=dealership, car=car2, price=20000.00
+        )
+
+        response = api_client.get(f"/api/buyer-reports/{regular_user.id}/")
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["total_spent"] == 45000.0
+        assert set(response.data["purchased_cars"]) == {"Camry", "Corolla"}
+
+    def test_buyer_report_not_found(self, api_client: APIClient) -> None:
+        response = api_client.get("/api/buyer-reports/999/")
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_buyer_report_methods_not_allowed(
+        self, api_client: APIClient, regular_user: User
+    ) -> None:
+        response = api_client.post("/api/buyer-reports/", {"username": "newuser"})
+        assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
+
+        response = api_client.put(f"/api/buyer-reports/{regular_user.id}/", {})
+        assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
+
+        response = api_client.delete(f"/api/buyer-reports/{regular_user.id}/")
+        assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED

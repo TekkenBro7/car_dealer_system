@@ -1,5 +1,6 @@
 from typing import Any
 
+from django.db.models import Sum
 from rest_framework import serializers
 
 from cars.serializers import CarDetailSerializer, CarListSerializer
@@ -41,6 +42,7 @@ class InventoryListSerializer(serializers.ModelSerializer):
             "dealership",
             "car",
             "quantity",
+            "price",
             "is_active",
             "created_at",
             "updated_at",
@@ -192,3 +194,31 @@ class DealershipSaleHistoryDetailSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
         read_only_fields = ["id", "sale_date", "created_at", "updated_at"]
+
+
+class DealershipReportSerializer(serializers.ModelSerializer):
+    total_sales = serializers.SerializerMethodField()
+    total_profit = serializers.SerializerMethodField()
+    unique_buyers = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Dealership
+        fields = [
+            "id",
+            "name",
+            "country",
+            "city",
+            "total_sales",
+            "total_profit",
+            "unique_buyers",
+        ]
+
+    def get_total_sales(self, obj: Dealership) -> int:
+        return obj.sales_history.count()
+
+    def get_total_profit(self, obj: Dealership) -> float:
+        total = obj.sales_history.aggregate(total=Sum("price"))["total"]
+        return float(total) if total else 0.0
+
+    def get_unique_buyers(self, obj: Dealership) -> int:
+        return obj.sales_history.values("buyer").distinct().count()

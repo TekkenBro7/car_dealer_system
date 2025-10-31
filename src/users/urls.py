@@ -4,6 +4,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from users.views.auth import LogoutView, VerifyAuthView
 from users.views.users import (
+    BuyerReportViewSet,
     ChangePasswordView,
     ConfirmEmailView,
     ConfirmUsernameView,
@@ -16,6 +17,8 @@ from users.views.users import (
 router = DefaultRouter()
 router.register("users", UserViewSet)
 router.register("profiles", UserProfileViewSet)
+router.register("buyer-reports", BuyerReportViewSet, basename="buyer-report")
+
 
 urlpatterns = [
     path("", include(router.urls)),

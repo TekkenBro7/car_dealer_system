@@ -14,6 +14,7 @@ from dealerships.models import (
 from dealerships.serializers import (
     DealershipPromotionDetailSerializer,
     DealershipPromotionListSerializer,
+    DealershipReportSerializer,
     DealershipSaleHistoryDetailSerializer,
     DealershipSaleHistoryListSerializer,
     DealershipSerializer,
@@ -530,3 +531,67 @@ class TestDealershipSaleHistoryDetailSerializer:
         )
         assert "model_name" in serializer.data["car"]
         assert "username" in serializer.data["buyer"]
+
+
+@pytest.mark.django_db
+class TestDealershipReportSerializer:
+    def test_serializer_fields(self, dealership: Dealership) -> None:
+        serializer = DealershipReportSerializer(instance=dealership)
+
+        expected_fields = {
+            "id",
+            "name",
+            "country",
+            "city",
+            "total_sales",
+            "total_profit",
+            "unique_buyers",
+        }
+        assert serializer.data.keys() == expected_fields
+
+    def test_total_sales_calculation(
+        self, dealership: Dealership, car: Car, user: User
+    ) -> None:
+        DealershipSaleHistory.objects.create(
+            dealership=dealership, car=car, buyer=user, price=25000.00
+        )
+        DealershipSaleHistory.objects.create(
+            dealership=dealership, car=car, buyer=user, price=30000.00
+        )
+
+        serializer = DealershipReportSerializer(instance=dealership)
+        assert serializer.data["total_sales"] == 2
+
+    def test_total_profit_calculation(
+        self, dealership: Dealership, car: Car, user: User
+    ) -> None:
+        DealershipSaleHistory.objects.create(
+            dealership=dealership, car=car, buyer=user, price=25000.00
+        )
+        DealershipSaleHistory.objects.create(
+            dealership=dealership, car=car, buyer=user, price=30000.00
+        )
+
+        serializer = DealershipReportSerializer(instance=dealership)
+        assert serializer.data["total_profit"] == 55000.0
+
+    def test_unique_buyers_calculation(self, dealership: Dealership, car: Car) -> None:
+        user1 = User.objects.create_user(
+            username="buyer1", email="b1@example.com", password="pass"
+        )
+        user2 = User.objects.create_user(
+            username="buyer2", email="b2@example.com", password="pass"
+        )
+
+        DealershipSaleHistory.objects.create(
+            dealership=dealership, car=car, buyer=user1, price=25000.00
+        )
+        DealershipSaleHistory.objects.create(
+            dealership=dealership, car=car, buyer=user2, price=30000.00
+        )
+        DealershipSaleHistory.objects.create(
+            dealership=dealership, car=car, buyer=user1, price=27000.00
+        )
+
+        serializer = DealershipReportSerializer(instance=dealership)
+        assert serializer.data["unique_buyers"] == 2

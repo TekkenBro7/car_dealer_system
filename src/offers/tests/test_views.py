@@ -89,15 +89,15 @@ class TestOfferViewSet:
         assert response.data["status"] == "pending"
 
     def test_update_offer(self, api_client: APIClient, offer: Offer) -> None:
-        update_data = {"max_price": 27000.00, "status": OfferStatus.ACCEPTED}
+        update_data = {"max_price": 27000.00, "status": OfferStatus.CANCELLED}
         response = api_client.patch(f"/api/offers/{offer.id}/", update_data)
         assert response.status_code == status.HTTP_200_OK
         assert response.data["max_price"] == "27000.00"
-        assert response.data["status"] == "accepted"
+        assert response.data["status"] == "cancelled"
 
         offer.refresh_from_db()
         assert offer.max_price == 27000.00
-        assert offer.status == OfferStatus.ACCEPTED
+        assert offer.status == OfferStatus.CANCELLED
 
     def test_delete_offer(self, api_client: APIClient, offer: Offer) -> None:
         response = api_client.delete(f"/api/offers/{offer.id}/")

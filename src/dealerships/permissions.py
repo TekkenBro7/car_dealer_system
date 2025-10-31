@@ -12,3 +12,12 @@ class IsAdminOrReadOnly(permissions.BasePermission):
             request.user.is_authenticated
             and getattr(request.user, "role", None) == "admin"
         )
+
+
+class IsAdminUser(permissions.BasePermission):
+    def has_permission(self, request: Request, view: APIView) -> bool:
+        return (
+            request.user
+            and request.user.is_authenticated
+            and getattr(request.user, "role", None) == "admin"
+        )

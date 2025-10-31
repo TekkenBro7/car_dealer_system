@@ -1,9 +1,12 @@
+from decimal import Decimal
+
 import pytest
 from django.db import IntegrityError
 
 from cars.models import BodyType, Car, CarBrand
+from dealerships.models import Dealership, DealershipSaleHistory
 from offers.models import Offer, OfferStatus
-from users.models import User
+from users.models import User, UserProfile
 
 
 @pytest.fixture
@@ -80,3 +83,59 @@ class TestOfferModel:
     def test_offer_without_car_raises_error(self, test_buyer: User) -> None:
         with pytest.raises(IntegrityError):
             Offer.objects.create(buyer=test_buyer, max_price=10000.00)
+
+
+@pytest.mark.django_db
+class TestOfferSignals:
+    def test_create_dealership_sale_history_signal(
+        self, test_buyer: User, test_car: Car
+    ) -> None:
+        dealership = Dealership.objects.create(
+            name="Test Dealership", country="JP", city="Tokyo", balance=100000.00
+        )
+
+        offer = Offer.objects.create(
+            buyer=test_buyer,
+            car=test_car,
+            dealership=dealership,
+            max_price=Decimal("30000.00"),
+            status=OfferStatus.PENDING,
+        )
+
+        assert not DealershipSaleHistory.objects.filter(
+            dealership=dealership, car=test_car, buyer=test_buyer
+        ).exists()
+
+        offer.status = OfferStatus.ACCEPTED
+        offer.save()
+
+        sale_history_qs = DealershipSaleHistory.objects.filter(
+            dealership=dealership, car=test_car, buyer=test_buyer, price=offer.max_price
+        )
+        assert sale_history_qs.exists()
+
+        profile = UserProfile.objects.get(user=test_buyer)
+        assert profile.balance == Decimal("-30000.00")
+        assert profile.total_spent == Decimal("30000.00")
+        assert profile.purchase_count == 1
+
+    def test_signal_not_triggered_for_pending_offer(
+        self, test_buyer: User, test_car: Car
+    ) -> None:
+        dealership = Dealership.objects.create(
+            name="Pending Dealership", country="JP", city="Osaka", balance=50000.00
+        )
+
+        Offer.objects.create(
+            buyer=test_buyer,
+            car=test_car,
+            dealership=dealership,
+            max_price=20000.00,
+            status=OfferStatus.PENDING,
+        )
+
+        assert not DealershipSaleHistory.objects.filter(
+            buyer=test_buyer, car=test_car
+        ).exists()
+
+        assert UserProfile.objects.filter(user=test_buyer).exists()

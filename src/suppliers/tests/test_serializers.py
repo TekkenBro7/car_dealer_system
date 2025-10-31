@@ -16,6 +16,7 @@ from suppliers.serializers import (
     SupplierOfferListSerializer,
     SupplierPromotionDetailSerializer,
     SupplierPromotionListSerializer,
+    SupplierReportSerializer,
     SupplierSaleHistoryDetailSerializer,
     SupplierSaleHistoryListSerializer,
     SupplierSerializer,
@@ -458,3 +459,64 @@ class TestSupplierSaleHistoryDetailSerializer:
             serializer.data["supplier"]["name"] == supplier_sale_history.supplier.name
         )
         assert "model_name" in serializer.data["car"]
+
+
+@pytest.mark.django_db
+class TestSupplierReportSerializer:
+    def test_serializer_fields(self, supplier: Supplier) -> None:
+        serializer = SupplierReportSerializer(instance=supplier)
+
+        expected_fields = {
+            "id",
+            "name",
+            "total_sales",
+            "total_revenue",
+            "partner_dealerships",
+        }
+        assert serializer.data.keys() == expected_fields
+
+    def test_total_sales_calculation(
+        self, supplier: Supplier, car: Car, dealership: Dealership
+    ) -> None:
+        SupplierSaleHistory.objects.create(
+            supplier=supplier, dealership=dealership, car=car, price=25000.00
+        )
+        SupplierSaleHistory.objects.create(
+            supplier=supplier, dealership=dealership, car=car, price=30000.00
+        )
+
+        serializer = SupplierReportSerializer(instance=supplier)
+        assert serializer.data["total_sales"] == 2
+
+    def test_total_revenue_calculation(
+        self, supplier: Supplier, car: Car, dealership: Dealership
+    ) -> None:
+        SupplierSaleHistory.objects.create(
+            supplier=supplier, dealership=dealership, car=car, price=25000.00
+        )
+        SupplierSaleHistory.objects.create(
+            supplier=supplier, dealership=dealership, car=car, price=30000.00
+        )
+
+        serializer = SupplierReportSerializer(instance=supplier)
+        assert serializer.data["total_revenue"] == 55000.0
+
+    def test_partner_dealerships_calculation(
+        self, supplier: Supplier, car: Car
+    ) -> None:
+        dealership1 = Dealership.objects.create(
+            name="Dealership 1", country="US", city="NY"
+        )
+        dealership2 = Dealership.objects.create(
+            name="Dealership 2", country="US", city="LA"
+        )
+
+        SupplierSaleHistory.objects.create(
+            supplier=supplier, dealership=dealership1, car=car, price=25000.00
+        )
+        SupplierSaleHistory.objects.create(
+            supplier=supplier, dealership=dealership2, car=car, price=30000.00
+        )
+
+        serializer = SupplierReportSerializer(instance=supplier)
+        assert serializer.data["partner_dealerships"] == 2

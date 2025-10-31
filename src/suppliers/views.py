@@ -16,12 +16,13 @@ from suppliers.models import (
     SupplierPromotion,
     SupplierSaleHistory,
 )
-from suppliers.permissions import IsAdminOrReadOnly
+from suppliers.permissions import IsAdminOrReadOnly, IsAdminUser
 from suppliers.serializers import (
     SupplierOfferDetailSerializer,
     SupplierOfferListSerializer,
     SupplierPromotionDetailSerializer,
     SupplierPromotionListSerializer,
+    SupplierReportSerializer,
     SupplierSaleHistoryDetailSerializer,
     SupplierSaleHistoryListSerializer,
     SupplierSerializer,
@@ -91,3 +92,9 @@ class SupplierSaleHistoryViewSet(viewsets.ModelViewSet):
         if self.action == ViewAction.RETRIEVE:
             return SupplierSaleHistoryDetailSerializer
         return SupplierSaleHistoryListSerializer
+
+
+class SupplierReportViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Supplier.objects.all()
+    serializer_class = SupplierReportSerializer
+    permission_classes = [IsAdminUser]
