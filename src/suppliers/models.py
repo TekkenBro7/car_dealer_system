@@ -1,4 +1,3 @@
-from django.contrib.auth import get_user_model
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django_countries.fields import CountryField
@@ -6,8 +5,6 @@ from django_countries.fields import CountryField
 from cars.models import Car
 from core.abstract_models import TimeStampedModel
 from suppliers.validators import validate_founded_year, validate_positive_value
-
-User = get_user_model()
 
 
 class Supplier(TimeStampedModel):

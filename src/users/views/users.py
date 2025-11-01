@@ -10,8 +10,9 @@ from rest_framework.views import APIView
 from core.enums import ViewAction
 from users.filters import UserFilter, UserProfileFilter
 from users.models import User, UserProfile
-from users.permissions import IsAdminOrSelf
+from users.permissions import IsAdminOrSelf, IsAdminUser
 from users.serializers import (
+    BuyerReportSerializer,
     ChangePasswordSerializer,
     PasswordResetConfirmSerializer,
     PasswordResetRequestSerializer,
@@ -110,3 +111,9 @@ class PasswordResetConfirmView(APIView):
             {"OK": "Password successfully reset."},
             status=status.HTTP_200_OK,
         )
+
+
+class BuyerReportViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = BuyerReportSerializer
+    permission_classes = [IsAdminUser]

@@ -30,3 +30,12 @@ class IsAdminOrSelf(permissions.BasePermission):
             return True
 
         return obj == request.user
+
+
+class IsAdminUser(permissions.BasePermission):
+    def has_permission(self, request: Request, view: APIView) -> bool:
+        return (
+            request.user
+            and request.user.is_authenticated
+            and getattr(request.user, "role", None) == "admin"
+        )

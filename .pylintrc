@@ -35,6 +35,9 @@ disable=
     R0901,  # too many ancestors
     R0801,  # similar lines
     W0223,  # abstract-method
+    W0613,  # too-many-arguments
+    R0913,  # too-many-arguments
+    R0917,  # too-many-positional-arguments
 
 [FORMAT]
 max-line-length=100

@@ -18,10 +18,11 @@ from dealerships.models import (
     Inventory,
     PreferredModel,
 )
-from dealerships.permissions import IsAdminOrReadOnly
+from dealerships.permissions import IsAdminOrReadOnly, IsAdminUser
 from dealerships.serializers import (
     DealershipPromotionDetailSerializer,
     DealershipPromotionListSerializer,
+    DealershipReportSerializer,
     DealershipSaleHistoryDetailSerializer,
     DealershipSaleHistoryListSerializer,
     DealershipSerializer,
@@ -110,3 +111,9 @@ class DealershipSaleHistoryViewSet(viewsets.ModelViewSet):
         if self.action == ViewAction.RETRIEVE:
             return DealershipSaleHistoryDetailSerializer
         return DealershipSaleHistoryListSerializer
+
+
+class DealershipReportViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Dealership.objects.all()
+    serializer_class = DealershipReportSerializer
+    permission_classes = [IsAdminUser]

@@ -3,7 +3,7 @@ from django.contrib.auth.models import AnonymousUser
 from rest_framework.permissions import SAFE_METHODS
 from rest_framework.test import APIRequestFactory
 
-from suppliers.permissions import IsAdminOrReadOnly
+from suppliers.permissions import IsAdminOrReadOnly, IsAdminUser
 from users.models import User
 
 
@@ -129,3 +129,36 @@ class TestIsAdminOrReadOnly:
                 request.user = admin_user
                 result = permission.has_permission(request, None)
                 assert result is True
+
+
+@pytest.mark.django_db
+class TestIsAdminUser:
+    def test_admin_user_has_permission(
+        self, api_request_factory: APIRequestFactory, admin_user: User
+    ) -> None:
+        permission = IsAdminUser()
+        request = api_request_factory.get("/api/admin-only/")
+        request.user = admin_user
+
+        result = permission.has_permission(request, None)
+        assert result is True
+
+    def test_regular_user_no_permission(
+        self, api_request_factory: APIRequestFactory, regular_user: User
+    ) -> None:
+        permission = IsAdminUser()
+        request = api_request_factory.get("/api/admin-only/")
+        request.user = regular_user
+
+        result = permission.has_permission(request, None)
+        assert result is False
+
+    def test_unauthenticated_user_no_permission(
+        self, api_request_factory: APIRequestFactory
+    ) -> None:
+        permission = IsAdminUser()
+        request = api_request_factory.get("/api/admin-only/")
+        request.user = AnonymousUser()
+
+        result = permission.has_permission(request, None)
+        assert result is False

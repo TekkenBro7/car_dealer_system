@@ -15,7 +15,7 @@ from dealerships.models import (
     Inventory,
     PreferredModel,
 )
-from suppliers.models import Supplier, SupplierOffer
+from suppliers.models import Supplier, SupplierOffer, SupplierSaleHistory
 from users.models import User
 
 
@@ -463,3 +463,55 @@ class TestDealershipSaleHistory:
 
         time_diff = timezone.now() - sale_data.sale_date
         assert time_diff.total_seconds() < 5
+
+
+@pytest.mark.django_db
+class TestSupplierSaleHistorySignal:
+    def test_supplier_sale_history_created_when_inventory_created(
+        self, dealership: Dealership, supplier: Supplier, car: Car
+    ) -> None:
+        SupplierOffer.objects.create(
+            supplier=supplier, car=car, price=25000.00, is_active=True
+        )
+
+        assert SupplierSaleHistory.objects.count() == 0
+
+        Inventory.objects.create(
+            dealership=dealership, car=car, price=25000.00, quantity=5
+        )
+
+        sale_history = SupplierSaleHistory.objects.first()
+        assert sale_history is not None
+        assert sale_history.supplier == supplier
+        assert sale_history.dealership == dealership
+        assert sale_history.car == car
+        assert sale_history.price == 25000.00
+        assert (timezone.now().date() - sale_history.sale_date).days == 0
+
+    # pylint: disable=unused-argument
+    def test_signal_not_triggered_if_no_matching_offer(
+        self, dealership: Dealership, supplier: Supplier, car: Car
+    ) -> None:
+        Inventory.objects.create(
+            dealership=dealership, car=car, price=30000.00, quantity=3
+        )
+
+        assert SupplierSaleHistory.objects.count() == 0
+
+    def test_signal_not_triggered_on_inventory_update(
+        self, dealership: Dealership, supplier: Supplier, car: Car
+    ) -> None:
+        SupplierOffer.objects.create(
+            supplier=supplier, car=car, price=25000.00, is_active=True
+        )
+
+        inventory = Inventory.objects.create(
+            dealership=dealership, car=car, price=25000.00, quantity=5
+        )
+
+        assert SupplierSaleHistory.objects.count() == 1
+
+        inventory.quantity = 10
+        inventory.save()
+
+        assert SupplierSaleHistory.objects.count() == 1

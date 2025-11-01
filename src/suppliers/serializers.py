@@ -1,5 +1,6 @@
 from typing import Any
 
+from django.db.models import Sum
 from rest_framework import serializers
 
 from cars.serializers import CarDetailSerializer, CarListSerializer
@@ -154,3 +155,23 @@ class SupplierSaleHistoryDetailSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
         read_only_fields = ["id", "sale_date", "created_at", "updated_at"]
+
+
+class SupplierReportSerializer(serializers.ModelSerializer):
+    total_sales = serializers.SerializerMethodField()
+    total_revenue = serializers.SerializerMethodField()
+    partner_dealerships = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Supplier
+        fields = ["id", "name", "total_sales", "total_revenue", "partner_dealerships"]
+
+    def get_total_sales(self, obj: Supplier) -> int:
+        return obj.sales.count()
+
+    def get_total_revenue(self, obj: Supplier) -> float:
+        total = obj.sales.aggregate(total=Sum("price"))["total"]
+        return float(total) if total else 0.0
+
+    def get_partner_dealerships(self, obj: Supplier) -> int:
+        return obj.sales.values("dealership").distinct().count()

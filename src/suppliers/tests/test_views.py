@@ -27,9 +27,27 @@ def regular_user() -> User:
 
 
 @pytest.fixture
+def regular_user_buyer() -> User:
+    return User.objects.create_user(
+        username="testuser",
+        email="test@example.com",
+        password="testpass123",
+        role="buyer",
+    )
+
+
+@pytest.fixture
 def api_client(regular_user: User) -> APIClient:
     client = APIClient()
     refresh = RefreshToken.for_user(regular_user)
+    client.credentials(HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}")
+    return client
+
+
+@pytest.fixture
+def api_client_buyer(regular_user_buyer: User) -> APIClient:
+    client = APIClient()
+    refresh = RefreshToken.for_user(regular_user_buyer)
     client.credentials(HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}")
     return client
 
@@ -306,3 +324,74 @@ class TestSupplierSaleHistoryViewSet:
     ) -> None:
         response = api_client.delete(f"/api/supplier-sales/{supplier_sale_history.id}/")
         assert response.status_code == status.HTTP_204_NO_CONTENT
+
+
+@pytest.mark.django_db
+class TestSupplierReportViewSet:
+    # pylint: disable=unused-argument
+    def test_list_supplier_reports_admin_access(
+        self, api_client: APIClient, supplier: Supplier
+    ) -> None:
+        response = api_client.get("/api/supplier-reports/")
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.data) == 1
+        assert response.data[0]["name"] == "Test Supplier"
+
+    def test_list_supplier_reports_regular_user_denied(
+        self, api_client: APIClient
+    ) -> None:
+        response = api_client.get("/api/supplier-reports/")
+        assert response.status_code == status.HTTP_200_OK
+
+    def test_retrieve_supplier_report_admin_access(
+        self, api_client: APIClient, supplier: Supplier
+    ) -> None:
+        response = api_client.get(f"/api/supplier-reports/{supplier.id}/")
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["name"] == "Test Supplier"
+        assert response.data["total_sales"] == 0
+        assert response.data["total_revenue"] == 0.0
+        assert response.data["partner_dealerships"] == 0
+
+    def test_retrieve_supplier_report_regular_user_denied(
+        self, api_client_buyer: APIClient, supplier: Supplier
+    ) -> None:
+        response = api_client_buyer.get(f"/api/supplier-reports/{supplier.id}/")
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_supplier_report_with_sales_data(
+        self,
+        api_client: APIClient,
+        supplier: Supplier,
+        car: Car,
+        dealership: Dealership,
+    ) -> None:
+        SupplierSaleHistory.objects.create(
+            supplier=supplier, dealership=dealership, car=car, price=25000.00
+        )
+        SupplierSaleHistory.objects.create(
+            supplier=supplier, dealership=dealership, car=car, price=30000.00
+        )
+
+        response = api_client.get(f"/api/supplier-reports/{supplier.id}/")
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["total_sales"] == 2
+        assert response.data["total_revenue"] == 55000.0
+        assert response.data["partner_dealerships"] == 1
+
+    def test_supplier_report_not_found(self, api_client: APIClient) -> None:
+        response = api_client.get("/api/supplier-reports/999/")
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_supplier_report_methods_not_allowed(
+        self, api_client: APIClient, supplier: Supplier
+    ) -> None:
+        response = api_client.post("/api/supplier-reports/", {"name": "New Supplier"})
+        assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
+
+        response = api_client.put(f"/api/supplier-reports/{supplier.id}/", {})
+        assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
+
+        response = api_client.delete(f"/api/supplier-reports/{supplier.id}/")
+        assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
