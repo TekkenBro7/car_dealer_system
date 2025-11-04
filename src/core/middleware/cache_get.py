@@ -10,6 +10,7 @@ NO_CACHE_PATHS = [
     "/api/auth/verify/",
     "/api/auth/confirm-email/",
     "/api/auth/confirm-username/",
+    "/admin/",
 ]
 
 

@@ -30,6 +30,9 @@ class Offer(TimeStampedModel):
         validators=[validate_positive_value],
         help_text="Price must be greater than 0",
     )
+    actual_price = models.DecimalField(
+        max_digits=12, decimal_places=2, null=True, blank=True
+    )
     status = models.CharField(
         max_length=20, choices=OfferStatus.choices, default=OfferStatus.PENDING
     )

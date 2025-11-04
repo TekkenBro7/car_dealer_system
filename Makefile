@@ -7,7 +7,7 @@ RED = \033[0;31m
 YELLOW = \033[1;33m
 NC = \033[0m 
 
-.PHONY: help runserver migrate makemigrations superuser tests
+.PHONY: help runserver migrate makemigrations superuser tests celery celery-beat
 
 help:
 	@echo "$(YELLOW)Available targets:$(NC)"
@@ -16,6 +16,8 @@ help:
 	@echo "  $(GREEN)makemigrations$(NC) - Create new migrations"
 	@echo "  $(GREEN)superuser$(NC)      - Create superuser"
 	@echo "  $(GREEN)tests$(NC)          - Run pytest tests"
+	@echo "  $(GREEN)celery$(NC)         - Run celery worker"
+	@echo "  $(GREEN)celery-beat$(NC)    - Run celery beat"
 
 runserver:
 	@echo "$(GREEN)Starting development server...$(NC)"
@@ -36,3 +38,11 @@ superuser:
 tests:
 	@echo "$(GREEN)Running tests...$(NC)"
 	pipenv run pytest src -v
+
+celery:
+	@echo "$(GREEN)Starting Celery worker...$(NC)"
+	cd src && pipenv run celery -A core worker -l info
+
+celery-beat:
+	@echo "$(GREEN)Starting Celery beat...$(NC)"
+	cd src && pipenv run celery -A core beat -l info

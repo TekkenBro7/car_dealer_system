@@ -88,7 +88,7 @@ class TestUserViewSet:
         assert response.data["username"] == regular_user.username
         assert response.data["email"] == regular_user.email
 
-    @patch("users.serializers.send_confirmation_email")
+    @patch("users.serializers.send_confirmation_email_task.delay")
     @patch("users.serializers.email_verification.generate_email_token")
     def test_create_user(
         self,
@@ -113,7 +113,7 @@ class TestUserViewSet:
         mock_send_email.assert_called_once()
         assert User.objects.filter(username="newuser").exists()
 
-    @patch("users.serializers.send_username_change_email")
+    @patch("users.serializers.send_username_change_email_task.delay")
     @patch("users.serializers.username_verification.generate_username_token")
     def test_update_user(
         self,
@@ -315,7 +315,7 @@ class TestChangePasswordView:
 @pytest.mark.django_db
 class TestPasswordResetRequestView:
     # pylint: disable=unused-argument
-    @patch("users.serializers.send_password_reset_email")
+    @patch("users.serializers.send_password_reset_email_task.delay")
     @patch(
         "users.serializers.password_reset_verification.generate_password_reset_token"
     )

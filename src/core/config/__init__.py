@@ -1,5 +1,6 @@
 from core.config.base import BaseConfig
 from core.config.cache import CacheConfig
+from core.config.celery import CeleryConfig
 from core.config.database import DatabaseConfig
 from core.config.email import EmailConfig
 from core.config.jwt import JwtConfig
@@ -15,3 +16,4 @@ class Config:
     jwt = JwtConfig
     logging = LoggingConfig
     swagger = SwaggerConfig
+    celery = CeleryConfig

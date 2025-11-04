@@ -38,6 +38,7 @@ disable=
     W0613,  # too-many-arguments
     R0913,  # too-many-arguments
     R0917,  # too-many-positional-arguments
+    R0914,  # too-many-locals
 
 [FORMAT]
 max-line-length=100

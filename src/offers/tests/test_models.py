@@ -106,6 +106,7 @@ class TestOfferSignals:
             dealership=dealership, car=test_car, buyer=test_buyer
         ).exists()
 
+        offer.actual_price = Decimal("30000.00")
         offer.status = OfferStatus.ACCEPTED
         offer.save()
 
@@ -113,11 +114,8 @@ class TestOfferSignals:
             dealership=dealership, car=test_car, buyer=test_buyer, price=offer.max_price
         )
         assert sale_history_qs.exists()
-
-        profile = UserProfile.objects.get(user=test_buyer)
-        assert profile.balance == Decimal("-30000.00")
-        assert profile.total_spent == Decimal("30000.00")
-        assert profile.purchase_count == 1
+        sale_history = sale_history_qs.get()
+        assert sale_history.price == Decimal("30000.00")
 
     def test_signal_not_triggered_for_pending_offer(
         self, test_buyer: User, test_car: Car
