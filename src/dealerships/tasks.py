@@ -29,20 +29,18 @@ def auto_buy_from_suppliers() -> None:
     for d in Dealership.objects.filter(is_active=True):
         logger.info("[%s] dealership {d.name} start", d.id)
 
-        res = select_preferred_best_offer(d, now)
-        if not res:
+        _, price, car = select_preferred_best_offer(d, now)
+        if price is None or car is None:
             logger.info("[%s] no preferred offer found", d.id)
 
-            res = select_history_best_offer(d, now)
-            if not res:
+            _, price, car = select_history_best_offer(d, now)
+            if price is None or car is None:
                 logger.info("[%s] no history offer found", d.id)
 
-                res = select_global_best_offer(now)
-                if not res:
+                _, price, car = select_global_best_offer(now)
+                if price is None or car is None:
                     logger.info("[%s] no global popular offers found", d.id)
                     continue
-
-        _, price, car = res
 
         if price > d.balance:
             logger.info("[%s] skipping, price %s > balance %s", d.id, price, d.balance)

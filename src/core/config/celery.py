@@ -23,6 +23,6 @@ class CeleryConfig:
         },
         "process-pending-offers": {
             "task": "offers.tasks.process_pending_offers",
-            "schedule": timedelta(seconds=15),
+            "schedule": timedelta(minutes=5),
         },
     }

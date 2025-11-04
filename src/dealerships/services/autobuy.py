@@ -9,9 +9,12 @@ from cars.models import Car
 from dealerships.models import Dealership, DealershipSaleHistory
 from dealerships.services.inventory import update_inventory
 from dealerships.services.supplier_offers import find_best_offer_for_car
+from suppliers.models import SupplierOffer
 
 
-def _select_best_offer_for_car(car: Car, now: date) -> Optional[Tuple]:
+def _select_best_offer_for_car(
+    car: Car, now: date
+) -> Tuple[Optional[SupplierOffer], Optional[Decimal], Optional[Car]]:
     """
     For a given car returns best supplier offer (with promotions applied)
 
@@ -23,10 +26,12 @@ def _select_best_offer_for_car(car: Car, now: date) -> Optional[Tuple]:
     if res:
         offer, price = res
         return offer, price, offer.car
-    return None
+    return None, None, None
 
 
-def select_preferred_best_offer(d: Dealership, now: date) -> Optional[Tuple]:
+def select_preferred_best_offer(
+    d: Dealership, now: date
+) -> Tuple[Optional[SupplierOffer], Optional[Decimal], Optional[Car]]:
     """
     Strategy #1:
     Try to buy among dealership "preferred models"
@@ -34,31 +39,36 @@ def select_preferred_best_offer(d: Dealership, now: date) -> Optional[Tuple]:
     For each preferred model - get best supplier price and pick the cheapest
 
     Returns:
-        tuple(SupplierOffer, Decimal, Car) or None
+        tuple(SupplierOffer, Decimal, Car) or (None, None, None)
     """
-    best = None
+    best: Tuple[Optional[SupplierOffer], Optional[Decimal], Optional[Car]] = (
+        None,
+        None,
+        None,
+    )
     price_chosen: Optional[Decimal] = None
 
     for pm in d.preferred_models.select_related("car"):
-        res = _select_best_offer_for_car(pm.car, now)
-        if not res:
+        offer, price, car = _select_best_offer_for_car(pm.car, now)
+        if price is None:
             continue
 
-        _, price, _ = res
         if price <= d.balance and (price_chosen is None or price < price_chosen):
-            best = res
+            best = (offer, price, car)
             price_chosen = price
 
     return best
 
 
-def select_history_best_offer(d: Dealership, now: date) -> Optional[Tuple]:
+def select_history_best_offer(
+    d: Dealership, now: date
+) -> Tuple[Optional[SupplierOffer], Optional[Decimal], Optional[Car]]:
     """
     Strategy #2:
     If no preferred models found - fallback to the most sold car in this dealership
 
     Returns:
-        tuple(SupplierOffer, Decimal, Car) or None
+        tuple(SupplierOffer, Decimal, Car) or (None, None, None)
     """
     top = (
         DealershipSaleHistory.objects.filter(dealership=d)
@@ -68,19 +78,21 @@ def select_history_best_offer(d: Dealership, now: date) -> Optional[Tuple]:
         .first()
     )
     if not top:
-        return None
+        return None, None, None
 
     car = Car.objects.get(id=top["car"])
     return _select_best_offer_for_car(car, now)
 
 
-def select_global_best_offer(now: date) -> Optional[Tuple]:
+def select_global_best_offer(
+    now: date,
+) -> Tuple[Optional[SupplierOffer], Optional[Decimal], Optional[Car]]:
     """
     Strategy #3:
     If even dealership has no history - fallback to globally most sold car
 
     Returns:
-        tuple(SupplierOffer, Decimal, Car) or None
+        tuple(SupplierOffer, Decimal, Car) or (None, None, None)
     """
     top = (
         DealershipSaleHistory.objects.values("car")
@@ -89,7 +101,7 @@ def select_global_best_offer(now: date) -> Optional[Tuple]:
         .first()
     )
     if not top:
-        return None
+        return None, None, None
 
     car = Car.objects.get(id=top["car"])
     return _select_best_offer_for_car(car, now)
