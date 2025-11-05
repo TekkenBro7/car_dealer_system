@@ -5,10 +5,10 @@ from rest_framework import serializers
 
 from dealerships.models import DealershipSaleHistory
 from users.models import User, UserProfile
-from users.services.email_service import (
-    send_confirmation_email,
-    send_password_reset_email,
-    send_username_change_email,
+from users.tasks import (
+    send_confirmation_email_task,
+    send_password_reset_email_task,
+    send_username_change_email_task,
 )
 from users.utils import (
     email_verification,
@@ -29,7 +29,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         user = User.objects.create_user(**validated_data)
 
         token = email_verification.generate_email_token(user)
-        send_confirmation_email(user, token)
+        send_confirmation_email_task.delay(user.id, token)
 
         return user
 
@@ -84,13 +84,13 @@ class UserSerializer(serializers.ModelSerializer):
             instance.email_confirmed = False
 
             token = email_verification.generate_email_token(instance)
-            send_confirmation_email(instance, token)
+            send_confirmation_email_task.delay(instance.id, token)
 
         if new_username != instance.username:
             token = username_verification.generate_username_token(
                 instance, new_username
             )
-            send_username_change_email(instance, token, new_username)
+            send_username_change_email_task.delay(instance.id, token, new_username)
 
         instance.save()
         return instance
@@ -119,7 +119,7 @@ class PasswordResetRequestSerializer(serializers.Serializer):
         email = self.validated_data["email"]
         user = User.objects.get(email=email)
         token = password_reset_verification.generate_password_reset_token(user)
-        send_password_reset_email(user, token)
+        send_password_reset_email_task.delay(user.id, token)
         return user
 
 

@@ -5,7 +5,6 @@ from django.dispatch import receiver
 
 from dealerships.models import DealershipSaleHistory
 from offers.models import Offer, OfferStatus
-from users.models import UserProfile
 
 
 # pylint: disable=unused-argument
@@ -21,11 +20,5 @@ def create_dealership_sale_history(
         dealership=instance.dealership,
         car=instance.car,
         buyer=instance.buyer,
-        price=instance.max_price,
+        price=instance.actual_price,
     )
-
-    profile, _ = UserProfile.objects.get_or_create(user=instance.buyer)
-    profile.balance = profile.balance - instance.max_price
-    profile.total_spent += instance.max_price
-    profile.purchase_count += 1
-    profile.save()

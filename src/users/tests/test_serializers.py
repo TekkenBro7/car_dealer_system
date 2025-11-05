@@ -45,7 +45,7 @@ class TestRegisterSerializer(TestCase):
             self.assertFalse(serializer.is_valid())
             self.assertIn(field, serializer.errors)
 
-    @patch("users.serializers.send_confirmation_email")
+    @patch("users.serializers.send_confirmation_email_task.delay")
     @patch("users.serializers.email_verification.generate_email_token")
     def test_create_user_calls_email_service(
         self, mock_generate_token: MagicMock, mock_send_email: MagicMock
@@ -62,7 +62,7 @@ class TestRegisterSerializer(TestCase):
         self.assertTrue(user.check_password(self.valid_data["password"]))
 
         mock_generate_token.assert_called_once_with(user)
-        mock_send_email.assert_called_once_with(user, "mock_token")
+        mock_send_email.assert_called_once_with(user.id, "mock_token")
 
     def test_register_serializer_does_not_return_password(self) -> None:
         user = User.objects.create_user(**self.valid_data)
@@ -266,15 +266,15 @@ class TestPasswordResetRequestSerializer(TestCase):
             str(serializer.errors["email"][0]), "User with this email not found."
         )
 
-    @patch("users.serializers.send_password_reset_email")
+    @patch("users.serializers.send_password_reset_email_task.delay")
     @patch(
         "users.serializers.password_reset_verification.generate_password_reset_token"
     )
     def test_save_method(
-        self, mock_generate_token: MagicMock, mock_send_email: MagicMock
+        self, mock_generate_token: MagicMock, mock_send_email_delay: MagicMock
     ) -> None:
         mock_generate_token.return_value = "mock_reset_token"
-        mock_send_email.return_value = None
+        mock_send_email_delay.return_value = None
 
         serializer = PasswordResetRequestSerializer(data=self.valid_data)
         self.assertTrue(serializer.is_valid())
@@ -283,7 +283,7 @@ class TestPasswordResetRequestSerializer(TestCase):
 
         self.assertEqual(result_user, self.user)
         mock_generate_token.assert_called_once_with(self.user)
-        mock_send_email.assert_called_once_with(self.user, "mock_reset_token")
+        mock_send_email_delay.assert_called_once_with(self.user.id, "mock_reset_token")
 
     def test_required_email_field(self) -> None:
         serializer = PasswordResetRequestSerializer(data={})

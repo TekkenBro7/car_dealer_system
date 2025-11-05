@@ -2,7 +2,7 @@ from core.config.base import BaseConfig
 
 
 class LoggingConfig:
-    LOG_DIR = BaseConfig.BASE_DIR.parent / "logs"
+    LOG_DIR = BaseConfig.BASE_DIR / "logs"
     LOG_DIR.mkdir(exist_ok=True)
 
     LOGGING = {
