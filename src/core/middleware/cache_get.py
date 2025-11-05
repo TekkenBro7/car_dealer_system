@@ -4,19 +4,16 @@ from django.core.cache import cache
 from django.http import HttpRequest, HttpResponse
 from django.utils.deprecation import MiddlewareMixin
 
-CACHE_TIMEOUT = 60 * 10
+from core.config.cache import CacheConfig
+from core.enums import HttpMethod
 
-NO_CACHE_PATHS = [
-    "/api/auth/verify/",
-    "/api/auth/confirm-email/",
-    "/api/auth/confirm-username/",
-    "/admin/",
-]
+CACHE_TIMEOUT = CacheConfig.CACHE_TIMEOUT
+NO_CACHE_PATHS = CacheConfig.NO_CACHE_PATHS
 
 
 class CacheGETMiddleware(MiddlewareMixin):
     def process_request(self, request: HttpRequest) -> Optional[HttpResponse]:
-        if request.method != "GET":
+        if request.method != HttpMethod.GET:
             return None
 
         for p in NO_CACHE_PATHS:
@@ -33,7 +30,7 @@ class CacheGETMiddleware(MiddlewareMixin):
     def process_response(
         self, request: HttpRequest, response: HttpResponse
     ) -> HttpResponse:
-        if request.method == "GET" and response.status_code == 200:
+        if request.method == HttpMethod.GET and response.status_code == 200:
             for p in NO_CACHE_PATHS:
                 if request.path.startswith(p):
                     return response
