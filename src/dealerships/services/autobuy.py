@@ -19,12 +19,11 @@ def _select_best_offer_for_car(
     For a given car returns best supplier offer (with promotions applied)
 
     Returns:
-        tuple(SupplierOffer, Decimal, Car) or None
+        tuple(SupplierOffer, Decimal, Car) or (None, None)
         Offer + final price + same car object returned
     """
-    res = find_best_offer_for_car(car, now)
-    if res:
-        offer, price = res
+    offer, price = find_best_offer_for_car(car, now)
+    if offer:
         return offer, price, offer.car
     return None, None, None
 
