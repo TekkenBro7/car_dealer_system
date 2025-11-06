@@ -27,7 +27,7 @@ def auto_buy_from_suppliers() -> None:
     now = timezone.now().date()
 
     for d in Dealership.objects.filter(is_active=True):
-        logger.info("[%s] dealership {d.name} start", d.id)
+        logger.info("[%s] dealership %s start", d.id, d.name)
 
         _, price, car = select_preferred_best_offer(d, now)
         if price is None or car is None:

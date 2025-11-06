@@ -49,7 +49,7 @@ def apply_supplier_promotion_price(offer: SupplierOffer, now_date: date) -> Deci
 
 def find_best_offer_for_car(
     car: Car, now_date: date
-) -> Optional[tuple[SupplierOffer, Decimal]]:
+) -> tuple[Optional[SupplierOffer], Optional[Decimal]]:
     """
     Iterate all active supplier offers for given car
     and return (offer, final_price_after_promotions) for the lowest price
@@ -72,4 +72,4 @@ def find_best_offer_for_car(
     if best_offer is not None and best_price:
         return best_offer, best_price
 
-    return None
+    return None, None
