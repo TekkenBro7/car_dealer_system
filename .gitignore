@@ -135,6 +135,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+.env.prod
 
 # Spyder project settings
 .spyderproject
@@ -176,3 +177,7 @@ cython_debug/
 
 # Media content
 media/
+
+# Static connent
+staticfiles/
+static/
